@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prefectures', function (Blueprint $table) {
-            $table->id();
-            $table->string('name_ja');
-            $table->string('name_en');
-            $table->string('code', 3)->unique()->nullable(); // 'NAG' など任意
-            $table->timestamps();
+        Schema::table('place_translations', function (Blueprint $table) {
+            $table->fullText(['name', 'summary'], 'fulltext_name_summary');
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('prefectures');
+        Schema::table('place_translations', function (Blueprint $table) {
+            $table->dropFullText('fulltext_name_summary');
+        });
     }
 };

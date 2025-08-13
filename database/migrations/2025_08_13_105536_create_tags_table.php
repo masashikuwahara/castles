@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('tags', function (Blueprint $table) {
             $table->id();
+            $table->string('name'); // まずは日本語名でOK（将来 tag_translations を追加可）
+            $table->string('slug')->unique();
             $table->timestamps();
         });
     }
-
+    
     /**
      * Reverse the migrations.
      */

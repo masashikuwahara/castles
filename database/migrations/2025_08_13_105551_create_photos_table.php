@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('photos', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('place_id')->constrained()->cascadeOnDelete();
+            $table->string('path');          // /storage/photos/xxx.webp など
+            $table->string('caption_ja')->nullable();
+            $table->string('caption_en')->nullable();
+            $table->date('shot_at')->nullable();
+            $table->boolean('is_cover')->default(false);
             $table->timestamps();
         });
     }

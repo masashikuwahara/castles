@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prefectures', function (Blueprint $table) {
-            $table->id();
-            $table->string('name_ja');
-            $table->string('name_en');
-            $table->string('code', 3)->unique()->nullable(); // 'NAG' など任意
-            $table->timestamps();
+        Schema::table('places', function (Blueprint $table) {
+            $table->foreign('prefecture_id')
+                ->references('id')->on('prefectures')
+                ->nullOnDelete();
         });
+
     }
 
     /**
@@ -25,6 +24,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('prefectures');
+        Schema::table('places', function (Blueprint $table) {
+            //
+        });
     }
 };
