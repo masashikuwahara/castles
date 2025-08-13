@@ -5,8 +5,13 @@
       <h3 class="font-semibold line-clamp-1">{{ place.name }}</h3>
       <p class="text-sm text-gray-600 line-clamp-2">{{ place.summary }}</p>
       <div class="mt-2 flex flex-wrap gap-1">
-        <span v-for="t in place.tags || []" :key="t.slug"
-          class="text-xs px-2 py-0.5 bg-gray-100 rounded-full">{{ t.name }}</span>
+        <!-- <span v-for="t in place.tags || []" :key="t.slug"
+          class="text-xs px-2 py-0.5 bg-gray-100 rounded-full">{{ t.name }}</span> -->
+        <router-link v-for="t in place.tags || []" :key="t.slug"
+          class="text-xs px-2 py-0.5 bg-gray-100 rounded-full hover:bg-gray-200"
+          :to="{ name:'tag', params:{ locale: $route.params.locale, slug: t.slug } }">
+          #{{ t.name }}
+        </router-link>
       </div>
       <router-link
         :to="{ name:'detail', params:{ locale: $route.params.locale, slug: place.slug_localized || place.slug } }"
