@@ -12,25 +12,29 @@
 
     <!-- 一覧 -->
     <div v-if="store.loading">Loading...</div>
+    <div v-else-if="store.error" class="p-3 bg-red-50 text-red-700 rounded mb-4">
+      {{ store.error.message || store.error }}
+    </div>
     <div v-else class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       <PlaceCard v-for="p in store.items" :key="p.id" :place="p" />
     </div>
 
     <!-- 簡易ページャ（APIのlinks/metaに合わせて必要なら） -->
-    <div class="mt-6 flex gap-2" v-if="store.pagination?.links">
+    <div class="mt-6 flex gap-2 flex-wrap" v-if="hasPager">
       <button
         v-for="(l, idx) in store.pagination.links"
         :key="idx"
-        :disabled="!l.url"
-        @click="goto(l.url)"
+        :disabled="!l?.url || l?.active"
+        @click="l?.url && goto(l.url)"
         class="px-3 py-1 border rounded disabled:opacity-50"
-        v-html="l.label" />
+        v-html="l.label" 
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, watchEffect } from 'vue'
+import { ref, watch, watchEffect, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { usePlacesStore } from '../stores/places'
@@ -44,10 +48,13 @@ const { t } = useI18n()
 
 const q = ref(route.query.q || '')
 
+const hasPager = computed(() =>
+!!(store.pagination && Array.isArray(store.pagination.links) && store.pagination.links.length)
+)
+
 function reload() {
   const params = { ...route.query, q: q.value || undefined, page: undefined }
   router.replace({ query: params })
-  store.fetchList(route.params.locale, params)
 }
 
 watchEffect(() => {
