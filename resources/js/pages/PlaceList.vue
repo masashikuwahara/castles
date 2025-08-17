@@ -19,17 +19,16 @@
       <PlaceCard v-for="p in store.items" :key="p.id" :place="p" />
     </div>
 
-    <!-- 簡易ページャ（APIのlinks/metaに合わせて必要なら） -->
-    <div class="mt-6 flex gap-2 flex-wrap" v-if="hasPager">
-      <button
-        v-for="(l, idx) in store.pagination.links"
-        :key="idx"
-        :disabled="!l?.url || l?.active"
-        @click="l?.url && goto(l.url)"
-        class="px-3 py-1 border rounded disabled:opacity-50"
-        v-html="l.label" 
-      />
-    </div>
+    <!-- ページャ -->
+     <Pagination
+     v-if="store.pagination && store.pagination.last_page > 1"
+     :pagination="store.pagination"
+     :radius="2"
+     @change="onPageChange"
+     />
+     <p v-if="store.pagination" class="text-sm text-gray-500 mb-3">
+      {{ store.pagination.from }}–{{ store.pagination.to }} / {{ store.pagination.total }}
+     </p>
   </div>
 </template>
 
@@ -40,6 +39,7 @@ import { useI18n } from 'vue-i18n'
 import { usePlacesStore } from '../stores/places'
 import PlaceCard from '../components/PlaceCard.vue'
 import FilterBar from '../components/FilterBar.vue'
+import Pagination from '../components/Pagination.vue'
 
 const store = usePlacesStore()
 const route = useRoute()
@@ -55,6 +55,12 @@ const hasPager = computed(() =>
 function reload() {
   const params = { ...route.query, q: q.value || undefined, page: undefined }
   router.replace({ query: params })
+}
+
+function onPageChange(n) {
+  const params = { ...route.query, page: n }
+  router.replace({ query: params })
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 watchEffect(() => {

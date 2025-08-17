@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Place extends Model
+class Place extends Model implements HasMedia
 {
+    use InteractsWithMedia;
     protected $fillable = [
         'type','slug','prefecture_id','city','lat','lng',
         'built_year','abolished_year','castle_structure','tenshu_structure',
@@ -28,6 +31,24 @@ class Place extends Model
     public function photos()
     {
         return $this->hasMany(Photo::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('photos')->useDisk('public');
+    }
+
+    public function registerMediaConversions(\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        // 基本はWebP（横幅基準）。縦横比は元画像に追随
+        $this->addMediaConversion('thumb-webp')->width(240)->format('webp');
+        $this->addMediaConversion('card-webp')->width(600)->format('webp');
+        $this->addMediaConversion('cover-webp')->width(1200)->format('webp');
+
+        // ※AVIFを後で使うなら↓を有効化（サーバが対応してから）
+        // $this->addMediaConversion('thumb-avif')->width(240)->format('avif');
+        // $this->addMediaConversion('card-avif')->width(600)->format('avif');
+        // $this->addMediaConversion('cover-avif')->width(1200)->format('avif');
     }
 }
 
