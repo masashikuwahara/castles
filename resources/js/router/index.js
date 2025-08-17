@@ -5,6 +5,8 @@ const PlaceDetail = () => import('../pages/PlaceDetail.vue')
 
 const toList = (locale, query) => ({ name: 'list', params: { locale }, query })
 
+const QuizPage = () => import('../pages/QuizPage.vue')
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -23,6 +25,7 @@ const router = createRouter({
       redirect: to => toList(to.params.locale, { others: 1 }) },
     { path: '/:locale(ja|en)/cultural-properties',
       redirect: to => toList(to.params.locale, { type: 'cultural_property' }) },
+    { path: '/:locale(ja|en)/quiz', name: 'quiz', component: QuizPage },
 
     // ★ タグページ
     { name: 'tags-index', path: '/:locale(ja|en)/tags', component: () => import('../pages/TagsIndex.vue') },
