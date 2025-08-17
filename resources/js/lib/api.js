@@ -9,3 +9,6 @@ export const getPlace = (locale, slug) =>
 
 export const listTags = (locale) =>
   api.get(`/${locale}/tags`)
+
+export const getQuiz = (locale, params = {}) =>
+  api.get(`/${locale}/quiz`, { params })

@@ -45,6 +45,11 @@
             :aria-current="currentKey==='tags' ? 'page' : undefined"
           >タグ</router-link>
 
+          <router-link
+            :to="{ name:'quiz', params: { locale: $route.params.locale } }"
+            :class="linkClass('quiz')"
+          >クイズ</router-link>
+
           <!-- 言語切替 -->
           <div class="flex items-center gap-2 ml-4">
             <button class="px-3 py-1 rounded border" @click="switchLocale('ja')">日本語</button>
@@ -121,6 +126,7 @@ const currentKey = computed(() => {
     if (q.type === 'castle' && (q.top100c === '1' || q.top100c === 1)) return 'top100c'
     if (q.others === '1' || q.others === 1) return 'others'
     if (q.type === 'cultural_property') return 'cp'
+    if (route.name === 'quiz') return 'quiz'
   }
   return ''
 })
