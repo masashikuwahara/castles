@@ -9,3 +9,14 @@ export function useLocaleRoute() {
   }
   return { rl }
 }
+
+// 使い方
+
+// <script setup>
+// +import { useLocaleRoute } from '../composables/useLocaleRoute'
+// +const { rl } = useLocaleRoute()
+// </script>
+
+// <!-- 例：クイズへのリンク -->
+// - <router-link :to="{ name:'quiz', params:{ locale: $route.params.locale } }">クイズ</router-link>
+// + <router-link :to="rl({ name:'quiz' })">クイズ</router-link>
