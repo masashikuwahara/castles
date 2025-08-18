@@ -16,6 +16,17 @@ const messages = {
   }
 }
 
+const pinia = createPinia()
+// ★超簡易の永続化：各ストアの state を localStorage に保存/復元
+pinia.use(({ store }) => {
+  const key = `pinia:${store.$id}`
+  const saved = localStorage.getItem(key)
+  if (saved) store.$patch(JSON.parse(saved))
+  store.$subscribe((_, state) => {
+    localStorage.setItem(key, JSON.stringify(state))
+  })
+})
+
 const i18n = createI18n({
   legacy: false,
   locale: 'ja',
@@ -23,8 +34,8 @@ const i18n = createI18n({
   messages,
 })
 
-createApp(App)
-  .use(createPinia())
-  .use(router)
-  .use(i18n)
-  .mount('#app')
+const app = createApp(App)
+  app.use(createPinia())
+  app.use(router)
+  app.use(i18n)
+  app.mount('#app')
