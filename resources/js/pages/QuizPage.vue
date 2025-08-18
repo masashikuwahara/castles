@@ -72,10 +72,6 @@
           <div class="font-semibold mb-1">{{ isCorrect ? '正解！' : '残念！' }}</div>
           <div class="text-sm">
             <span class="text-gray-700">答え：</span>
-            <!-- <router-link
-              class="underline"
-              :to="{ name:'detail', params:{ locale: $route.params.locale, slug: explain.slug } }"
-              >{{ explain.name }}</router-link> -->
             <router-link
               v-if="explain.slug"
               class="underline"
@@ -85,7 +81,7 @@
             </router-link>
           </div>
           <p v-if="explain.summary" class="text-sm mt-2 text-gray-700">{{ explain.summary }}</p>
-          <button class="mt-3 px-3 py-2 rounded border" @click="next">次の問題へ</button>
+          <button class="mt-3 px-3 py-2 rounded border" @click="goNext">次の問題へ</button>
         </div>
       </div>
     </div>
@@ -93,16 +89,15 @@
 </template>
 
 <script setup>
-// import { ref } from 'vue'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { getQuiz } from '../lib/api'
 import { useQuizStore } from '../stores/quiz'
 
 const qstore = useQuizStore()
-
 const route = useRoute()
-const loc = computed(() => route.params.locale || 'ja') // ← フォールバック
+const loc = computed(() => route.params.locale || 'ja')
+
 const loading = ref(true)
 const error = ref('')
 const q = ref(null)
@@ -110,20 +105,19 @@ const explain = ref({})
 const blur = ref(8)
 const answered = ref(false)
 const isCorrect = ref(false)
+const selectedId = ref(null)
+const nextQ = ref(null)
 
 function btnClass(id) {
-  // if (!answered.value) return ''
-  // return id === q.value.question.correct_id
   if (!answered.value || !q.value?.correct_id) return ''
-  return id === q.value.correct_id
-    ? 'bg-green-600 text-white border-green-600'
-    : 'opacity-60'
+  if (id === q.value.correct_id) return 'bg-green-600 text-white border-green-600'
+  if (id === selectedId.value)  return 'bg-red-600 text-white border-red-600'
+  return 'opacity-60'
 }
 
 async function fetchOne() {
   loading.value = true; error.value = ''; answered.value = false; isCorrect.value = false
   try {
-    // const { data } = await getQuiz(route.params.locale, { choices: 4 })
     const { data } = await getQuiz(route.params.locale, {
       choices: 4,
       exclude: qstore.seen.join(',') || undefined,
@@ -131,6 +125,8 @@ async function fetchOne() {
     q.value = data.data.question
     explain.value = data.data.explain
     blur.value = 8
+    nextQ.value = null
+    selectedId.value = null
   } catch (e) {
     error.value = e?.response?.data?.message || e.message || 'Failed to load'
   } finally {
@@ -141,15 +137,54 @@ async function fetchOne() {
 function answer(id) {
   answered.value = true
   isCorrect.value = (id === q.value.correct_id)
-  blur.value = 0 // 正解/不正解後はクリア表示
+  selectedId.value = id
+  blur.value = 0
   qstore.mark(isCorrect.value)
   qstore.push(q.value.place_id)
+  // 先読み
+  getQuiz(route.params.locale, {
+    choices: 4,
+    exclude: qstore.seen.join(',') || undefined,
+  }).then(({ data }) => { nextQ.value = data.data }).catch(() => {})
 }
 
-function next() {
-  fetchOne()
+function onKey(e) {
+  if (!q.value) return
+  const max = q.value.choices?.length || 0
+  if (!answered.value && e.key >= '1' && e.key <= String(max)) {
+    const idx = Number(e.key) - 1
+    const id = q.value.choices[idx]?.id
+    if (id) answer(id)
+  } else if (answered.value && e.key === 'Enter') {
+    goNext()
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+
+// ★ここがポイント：async を必ず付ける
+async function goNext() {
+  if (nextQ.value?.question) {
+    const n = nextQ.value
+    q.value = n.question
+    explain.value = n.explain
+    answered.value = false
+    isCorrect.value = false
+    selectedId.value = null
+    blur.value = 8
+    nextQ.value = null
+    // 次の先読みも開始
+    getQuiz(route.params.locale, {
+      choices: 4,
+      exclude: qstore.seen.join(',') || undefined,
+    }).then(({ data }) => { nextQ.value = data.data }).catch(() => {})
+  } else {
+    await fetchOne()   // ← async なので await が使える
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 fetchOne()
 </script>
+
