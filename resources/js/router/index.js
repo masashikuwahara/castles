@@ -6,6 +6,7 @@ const PlaceDetail = () => import('../pages/PlaceDetail.vue')
 const toList = (locale, query) => ({ name: 'list', params: { locale }, query })
 
 const QuizPage = () => import('../pages/QuizPage.vue')
+const CulturalDetail = () => import('../pages/CulturalDetail.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,26 @@ const router = createRouter({
     { name: 'list',   path: '/:locale(ja|en)/places',            component: PlaceList },
     { name: 'detail', path: '/:locale(ja|en)/places/:slug',      component: PlaceDetail },
 
+    // 100名城/続100/その他 → 一覧へクエリ付きリダイレクト
+    { name:'castles-top100',
+      path:'/:locale(ja|en)/castles/top100',
+      redirect: to => ({ name:'list', params:{ locale: to.params.locale }, query:{ type:'castle', top100:1 } })
+    },
+    { name:'castles-top100c',
+      path:'/:locale(ja|en)/castles/top100-continued',
+      redirect: to => ({ name:'list', params:{ locale: to.params.locale }, query:{ type:'castle', top100c:1 } })
+    },
+    { name:'castles-others',
+      path:'/:locale(ja|en)/castles/others',
+      redirect: to => ({ name:'list', params:{ locale: to.params.locale }, query:{ type:'castle', others:1 } })
+    },
+    
+    // 文化財一覧は既存の一覧を再利用（type=cultural を付けて転送）
+    { name: 'cultural-list', path: '/:locale(ja|en)/cultural',
+      redirect: to => ({ name: 'list', params: { locale: to.params.locale }, query: { type: 'cultural' } })
+    },
+    // 文化財の“別ページ”詳細
+    { name: 'cultural-detail', path: '/:locale(ja|en)/cultural/:slug', component: CulturalDetail },
     // ★ プレフィルタ直リンク（→ 一覧にクエリ付きでリダイレクト）
     { path: '/:locale(ja|en)/castles/top100',
       redirect: to => toList(to.params.locale, { type: 'castle', top100: 1 }) },

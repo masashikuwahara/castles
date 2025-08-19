@@ -1,23 +1,31 @@
 <template>
   <div class="mb-4 space-y-3">
     <!-- カテゴリ（タブ/セグメント） -->
-    <div class="flex flex-wrap gap-2">
-      <button
-        :class="btnClass(active==='top100')"
-        @click="setCategory('top100')">100名城</button>
+  <div class="flex flex-wrap gap-2">
+    <button
+      @click="apply({ type:'castle', top100:1 })"
+      :class="chipClass(isActive('top100'))"
+      :aria-pressed="isActive('top100')"
+    >100名城</button>
 
-      <button
-        :class="btnClass(active==='top100c')"
-        @click="setCategory('top100c')">続100名城</button>
+    <button
+      @click="apply({ type:'castle', top100c:1 })"
+      :class="chipClass(isActive('top100c'))"
+      :aria-pressed="isActive('top100c')"
+    >続100名城</button>
 
-      <button
-        :class="btnClass(active==='others')"
-        @click="setCategory('others')">それ以外の城</button>
+    <button
+      @click="apply({ type:'castle', others:1 })"
+      :class="chipClass(isActive('others'))"
+      :aria-pressed="isActive('others')"
+    >それ以外の城</button>
 
-      <button
-        :class="btnClass(active==='cp')"
-        @click="setCategory('cp')">文化財</button>
-    </div>
+    <button
+      @click="apply({ type:'cultural' })"
+      :class="chipClass(isActive('cultural'))"
+      :aria-pressed="isActive('cultural')"
+    >文化財</button>
+  </div>
 
     <!-- タグ（トグル式） -->
     <div class="flex items-center justify-between">
@@ -50,9 +58,11 @@
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { listTags } from '../lib/api'
+import { usePlacesStore } from '../stores/places'
 
 const route = useRoute()
 const router = useRouter()
+const store = usePlacesStore()
 
 const tags = ref([])
 const selectedTags = ref([])
@@ -101,6 +111,51 @@ function setCategory(key) {
 
   router.replace({ query: base })
 }
+
+function apply(next = {}) {
+  // 既存クエリから必要なものだけ引き継ぎつつ、置き換え
+  const q0 = route.query
+  const params = {
+    q: next.q ?? q0.q ?? undefined,
+    tags: next.tags ?? q0.tags ?? undefined,
+    sort: next.sort ?? q0.sort ?? undefined,
+    type: next.type ?? q0.type ?? undefined,
+    top100: next.top100 ? 1 : undefined,
+    top100c: next.top100c ? 1 : undefined,
+    others: next.others ? 1 : undefined,
+    page: undefined, // 切替時はページをリセット
+  }
+
+  // ★ 文化財に切替える場合は castle系フラグを確実に落とす
+  if (params.type === 'cultural') {
+    params.top100 = undefined
+    params.top100c = undefined
+    params.others = undefined
+  }
+
+  router.replace({ query: params })
+  // 念のため即時フェッチ（watchEffect でも動くが、ここでも呼んでおく）
+  store.fetchList(route.params.locale, params)
+}
+
+function isActive(key) {
+  const q = route.query
+  if (key === 'cultural') return q.type === 'cultural'
+  if (key === 'top100')   return q.type === 'castle' && (q.top100 === '1' || q.top100 == 1)
+  if (key === 'top100c')  return q.type === 'castle' && (q.top100c === '1' || q.top100c == 1)
+  if (key === 'others')   return q.type === 'castle' && (q.others === '1' || q.others == 1)
+  return false
+}
+
+// ★ タグ風チップのクラス
+const baseChip =
+  'inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border select-none ' +
+  'transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black ' +
+  'active:scale-[0.98]';
+const activeChip   = 'bg-black text-white border-black hover:bg-black';
+const inactiveChip = 'bg-white-100 text-gray-800 border-black-100';
+
+const chipClass = (active = false) => `${baseChip} ${active ? activeChip : inactiveChip}`;
 
 function toggleTag(slug) {
   const set = new Set(selectedTags.value)

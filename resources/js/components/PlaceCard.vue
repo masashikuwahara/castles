@@ -28,17 +28,25 @@
           #{{ t.name }}
         </router-link>
       </div>
-      <router-link
+      <!-- <router-link
         :to="{ name:'detail', params:{ locale: $route.params.locale, slug: place.slug_localized || place.slug } }"
         class="inline-block mt-3 text-sm underline"
-      >詳細</router-link>
+      >詳細</router-link> -->
+      <router-link :to="detailTo(place)" class="inline-block mt-3 text-sm underline">詳細</router-link>
     </div>
   </article>
 </template>
 
 <script setup>
+import { useRoute } from 'vue-router'
 const props = defineProps({ place: Object })
 const cover = props.place?.cover_photo || null
+const route = useRoute()
+const detailTo = (p) => {
+  const name = p.type === 'cultural' ? 'cultural-detail' : 'detail'
+  const slug = p.slug_localized || p.slug
+  return { name, params: { locale: route.params.locale, slug } }
+  }
 </script>
 
 <!-- <template>
