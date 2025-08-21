@@ -12,3 +12,9 @@ export const listTags = (locale) =>
 
 export const getQuiz = (locale, params = {}) =>
   api.get(`/${locale}/quiz`, { params })
+
+export const listCulturalSites = (locale, params={}) =>
+  api.get(`/${locale}/cultural-sites`, { params })
+
+export const getCulturalSite = (locale, slug) =>
+  api.get(`/${locale}/cultural-sites/${slug}`)
