@@ -27,7 +27,7 @@
         <button class="px-3 py-2 border rounded" @click="restart(qstore.total)">同じ問数でもう一度</button>
         <button class="px-3 py-2 border rounded" @click="restart(10)">10問で挑戦</button>
         <router-link class="px-3 py-2 border rounded inline-block"
-          :to="{ name:'list', params:{ locale: loc }, query:{} }">一覧へ戻る</router-link>
+          :to="rl({ name:'list' })">一覧へ戻る</router-link>
       </div>
     </div>
     <div v-else-if="!q" class="text-gray-500">問題が見つかりません。</div>
@@ -93,7 +93,7 @@
             <router-link
               v-if="explain.slug"
               class="underline"
-              :to="{ name:'detail', params:{ locale: loc, slug: explain.slug } }"
+              :to="rl({ name:'detail' })"
               >
               {{ explain.name }}
             </router-link>

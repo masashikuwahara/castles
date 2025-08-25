@@ -5,7 +5,7 @@
     <div v-else class="flex flex-wrap gap-2">
       <router-link v-for="t in tags" :key="t.slug"
         class="px-3 py-1 rounded-full border hover:bg-gray-50 text-sm"
-        :to="{ name: 'tag', params: { locale: $route.params.locale, slug: t.slug } }">
+        :to="rl({ name:'tag' })">
         #{{ t.name }}
       </router-link>
     </div>

@@ -62,6 +62,26 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // ルートが :locale を持つのに params.locale が無ければ補完
+  const needsLocale =
+    to.matched.some(m => /\/:locale(\(|$)/.test(m.path)) &&
+    (typeof to.params.locale !== 'string' || !to.params.locale)
+
+  if (needsLocale) {
+    const fallback =
+      (typeof from.params.locale === 'string' && from.params.locale) ||
+      (navigator.language && navigator.language.startsWith('en') ? 'en' : 'ja')
+
+    return next({
+      ...to,
+      params: { ...to.params, locale: fallback },
+      replace: true, // 履歴を汚さない
+    })
+  }
+  next()
+})
+
+router.beforeEach((to, from, next) => {
   if (!to.params.locale) return next({ ...to, params: { ...to.params, locale: 'ja' } })
   next()
 })

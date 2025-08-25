@@ -61,7 +61,7 @@
             <router-link
               v-for="t in site.tags" :key="t.slug"
               class="text-xs px-2 py-0.5 bg-gray-100 rounded-full hover:bg-gray-200"
-              :to="{ name:'list', params:{ locale: loc }, query:{ tags: t.slug, type: 'cultural' } }">
+              :to="rl({ name:'list', query:{ tags: t.slug, type: 'cultural' } })">
               #{{ t.name }}
             </router-link>
           </div>
@@ -90,9 +90,7 @@
           </iframe>
         </div>
         <div class="mt-4">
-          <router-link
-            class="text-sm underline"
-            :to="{ name:'cultural-list', params:{ locale: loc } }">文化財一覧に戻る</router-link>
+          <router-link :to="rl({ name:'cultural-list' })">文化財一覧に戻る</router-link>
         </div>
       </aside>
     </div>
@@ -102,12 +100,13 @@
 <script setup>
 import { computed, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
+import { useLocaleRoute } from '../composables/useLocaleRoute' // ★追加
 import { useCulturalsStore } from '../stores/culturals'
 import { useI18n } from 'vue-i18n'
 
 const { locale } = useI18n()
 const route = useRoute()
-const loc = computed(() => route.params.locale || 'ja')
+const { rl, loc } = useLocaleRoute() // ★追加（rl と loc を提供）
 const store = useCulturalsStore()
 const loading = ref(true)
 const error = ref('')
@@ -130,19 +129,13 @@ function gmapsEmbed(lat, lng) {
 watchEffect(async () => {
   loading.value = true; error.value = ''
   try {
-    await store.fetchOne(loc.value, route.params.slug)
+    const slug = window.location.pathname.split('/').pop()
+    await store.fetchOne(loc.value, slug)
   } catch (e) {
     error.value = e?.response?.data?.message || e.message || 'Failed to load'
   } finally {
     loading.value = false
   }
-})
-
-const img = computed(() => {
-  const c = site.value?.cover_photo
-  if (!c) return null
-  const cap = locale.value === 'ja' ? c.caption_ja : c.caption_en
-  return { ...c, caption: cap }
 })
 
 const gallery = computed(() => {

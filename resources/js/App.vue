@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <h1 class="font-bold">
           <router-link
-            :to="{ name: 'list', params: { locale: $route.params.locale }, query: {} }"
+            :to="rl({ name:'list' })"
             class="no-underline text-inherit hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 rounded"
             title="最初に戻る"
           >
@@ -74,26 +74,26 @@
       <div v-if="open" class="md:hidden border-t">
         <nav class="max-w-7xl mx-auto px-4 py-2 grid gap-1 text-sm">
           <router-link
-            :to="{ path: `/${$route.params.locale}/castles/top100` }"
+            :to="rl({ name:'castles-top100' })"
             :class="linkClass('top100', true)"
             @click="open=false"
           >100名城</router-link>
           <router-link
-            :to="{ path: `/${$route.params.locale}/castles/top100-continued` }"
+            :to="rl({ name:'top100-continued' })"
             :class="linkClass('top100c', true)"
             @click="open=false"
           >続100名城</router-link>
           <router-link
-            :to="{ path: `/${$route.params.locale}/castles/others` }"
+            :to="rl({ name:'others' })"
             :class="linkClass('others', true)"
             @click="open=false"
           >それ以外の城</router-link>
           <router-link
-            :to="{ name:'cultural-list', params:{ locale: $route.params.locale } }"
+            :to="rl({ name:'cultural-list' })"
             :class="linkClass('cultural')"
           >文化財</router-link>
           <router-link
-            :to="{ name: 'tags-index', params: { locale: $route.params.locale } }"
+            :to="rl({ name:'tags-index' })"
             :class="linkClass('tags', true)"
             @click="open=false"
           >タグ</router-link>
