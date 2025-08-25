@@ -10,15 +10,15 @@
              :width="img.width || null" :height="img.height || null"
              loading="lazy" decoding="async" alt="" class="w-full object-cover" />
       </picture>
+      <p v-if="img.caption" class="mt-2 px-3 pb-2 text-sm text-gray-600">{{ img.caption }}</p>
     </div>
-
-    <p v-if="img?.caption" class="mt-2 text-sm text-gray-600">{{ img.caption }}</p>
 
     <div v-if="loading">Loading...</div>
     <div v-else-if="error" class="p-3 bg-red-50 text-red-700 rounded">{{ error }}</div>
     <div v-else-if="!site" class="text-gray-500">見つかりませんでした。</div>
+
     <div v-else class="grid lg:grid-cols-3 gap-6">
-      <!-- 基本情報 -->
+      <!-- 概要 + 基本情報 -->
       <section class="lg:col-span-2">
         <h3 class="font-semibold mb-2">概要</h3>
         <p class="text-gray-800 whitespace-pre-line">{{ site.summary }}</p>
@@ -28,26 +28,36 @@
             <h4 class="font-semibold text-sm text-gray-600">所在地</h4>
             <p class="text-gray-800">{{ site.prefecture?.name_ja }} {{ site.city }}</p>
           </div>
+
           <div v-if="designation">
             <h4 class="font-semibold text-sm text-gray-600">指定文化財</h4>
             <p class="text-gray-800">{{ designation }}</p>
           </div>
-          <div v-if="periods.length">
-            <h4 class="font-semibold text-sm text-gray-600">時代</h4>
-            <p class="text-gray-800">{{ periods.join('・') }}</p>
-          </div>
-          <div v-if="siteTypes.length">
+
+          <div v-if="site.site_type">
             <h4 class="font-semibold text-sm text-gray-600">遺跡種別</h4>
-            <p class="text-gray-800">{{ siteTypes.join('・') }}</p>
+            <p class="text-gray-800">{{ site.site_type }}</p>
           </div>
-          <div v-if="site.built_year">
-            <h4 class="font-semibold text-sm text-gray-600">成立年代</h4>
-            <p class="text-gray-800">{{ site.built_year }}</p>
+
+          <div v-if="site.period">
+            <h4 class="font-semibold text-sm text-gray-600">時代</h4>
+            <p class="text-gray-800">{{ site.period }}</p>
           </div>
-          <div v-if="site.remains">
-            <h4 class="font-semibold text-sm text-gray-600">遺構</h4>
-            <p class="text-gray-800">{{ site.remains }}</p>
+
+          <div v-if="site.managing_agency">
+            <h4 class="font-semibold text-sm text-gray-600">管理主体</h4>
+            <p class="text-gray-800">{{ site.managing_agency }}</p>
           </div>
+
+          <div v-if="site.official_url">
+            <h4 class="font-semibold text-sm text-gray-600">公式サイト</h4>
+            <p class="text-gray-800">
+              <a :href="ensureHttp(site.official_url)" target="_blank" rel="noopener noreferrer" class="underline">
+                {{ site.official_url }}
+              </a>
+            </p>
+          </div>
+
           <div v-if="site.rating">
             <h4 class="font-semibold text-sm text-gray-600">おすすめ度</h4>
             <p class="text-gray-800">★{{ site.rating }}</p>
@@ -66,8 +76,32 @@
             </router-link>
           </div>
         </div>
+
+        <!-- メタ（任意：あれば表示） -->
+        <div v-if="Object.keys(meta).length" class="mt-6">
+          <h3 class="font-semibold mb-2">見学情報</h3>
+          <div class="grid sm:grid-cols-2 gap-4 text-sm">
+            <div v-if="meta.opening_hours">
+              <div class="text-gray-600">開館時間</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.opening_hours }}</div>
+            </div>
+            <div v-if="meta.closed">
+              <div class="text-gray-600">休館日</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.closed }}</div>
+            </div>
+            <div v-if="meta.fees">
+              <div class="text-gray-600">料金</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.fees }}</div>
+            </div>
+            <div v-if="meta.notes">
+              <div class="text-gray-600">備考</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.notes }}</div>
+            </div>
+          </div>
+        </div>
       </section>
 
+      <!-- 写真ギャラリー -->
       <section class="lg:col-span-3 mt-8" v-if="gallery.length">
         <h3 class="font-semibold mb-2">Photos</h3>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -90,12 +124,13 @@
           </iframe>
         </div>
         <div class="mt-4">
-          <router-link :to="rl({ name:'cultural-list' })">文化財一覧に戻る</router-link>
+          <router-link :to="rl({ name:'cultural-list' })" class="underline">文化財一覧に戻る</router-link>
         </div>
       </aside>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { computed, ref, watchEffect } from 'vue'
@@ -112,8 +147,15 @@ const loading = ref(true)
 const error = ref('')
 
 const site = computed(() => store.current)
-const img = computed(() => site.value?.cover_photo || null)
+// const img = computed(() => site.value?.cover_photo || null)
+const img = computed(() => {
+  const c = site.value?.cover_photo
+  if (!c) return null
+  const cap = locale.value === 'ja' ? c.caption_ja : c.caption_en
+  return { ...c, caption: cap }
+})
 const designation = computed(() => site.value?.designated_heritage || null)
+const meta = computed(() => site.value?.meta || {})
 
 // タグから「時代」「遺跡種別」を抽出（slugベース）
 const PERIOD_SLUGS = ['joumon','yayoi','kofun','asuka','nara','heian','kamakura','muromachi','edo','meiji']
@@ -124,6 +166,11 @@ const siteTypes = computed(() => (site.value?.tags || []).filter(t => TYPE_SLUGS
 
 function gmapsEmbed(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}&hl=${loc.value}&z=15&output=embed`
+}
+
+const ensureHttp = (u) => {
+  if (!u) return ''
+  return /^https?:\/\//i.test(u) ? u : `https://${u}`
 }
 
 watchEffect(async () => {
