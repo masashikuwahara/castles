@@ -12,6 +12,8 @@
       </picture>
     </div>
 
+    <p v-if="img?.caption" class="mt-2 text-sm text-gray-600">{{ img.caption }}</p>
+
     <div v-if="loading">Loading...</div>
     <div v-else-if="error" class="p-3 bg-red-50 text-red-700 rounded">{{ error }}</div>
     <div v-else-if="!site" class="text-gray-500">見つかりませんでした。</div>
@@ -64,9 +66,19 @@
             </router-link>
           </div>
         </div>
+      </section>
 
-        <!-- 写真ギャラリー（必要なら） -->
-        <!-- ここに複数写真を置く実装を後で足せます -->
+      <section class="lg:col-span-3 mt-8" v-if="gallery.length">
+        <h3 class="font-semibold mb-2">Photos</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <figure v-for="(ph, i) in gallery" :key="i" class="rounded-lg overflow-hidden border bg-white">
+            <picture>
+              <source v-if="ph.srcset?.webp" :srcset="ph.srcset.webp" type="image/webp" />
+              <img :src="ph.src" loading="lazy" decoding="async" alt="" class="w-full h-40 object-cover" />
+            </picture>
+            <figcaption v-if="ph.caption" class="px-2 py-1 text-xs text-gray-600">{{ ph.caption }}</figcaption>
+          </figure>
+        </div>
       </section>
 
       <!-- サイド：地図など -->
@@ -91,11 +103,12 @@
 import { computed, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCulturalsStore } from '../stores/culturals'
+import { useI18n } from 'vue-i18n'
 
+const { locale } = useI18n()
 const route = useRoute()
 const loc = computed(() => route.params.locale || 'ja')
 const store = useCulturalsStore()
-
 const loading = ref(true)
 const error = ref('')
 
@@ -123,5 +136,18 @@ watchEffect(async () => {
   } finally {
     loading.value = false
   }
+})
+
+const img = computed(() => {
+  const c = site.value?.cover_photo
+  if (!c) return null
+  const cap = locale.value === 'ja' ? c.caption_ja : c.caption_en
+  return { ...c, caption: cap }
+})
+
+const gallery = computed(() => {
+  const arr = site.value?.photos || []
+  const lang = locale.value
+  return arr.map(p => ({ ...p, caption: lang === 'ja' ? p.caption_ja : p.caption_en }))
 })
 </script>

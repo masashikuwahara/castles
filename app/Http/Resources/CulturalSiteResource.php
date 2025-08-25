@@ -9,18 +9,44 @@ class CulturalSiteResource extends JsonResource
     public function toArray($request)
     {
         $t = $this->translations->first();
+
+        // is_cover 優先
+        $coverMedia = $this->media()
+            ->where('collection_name','photos')
+            ->whereJsonContains('custom_properties->is_cover', true)->first()
+            ?? $this->getFirstMedia('photos');
+
         $cover = null;
-        if (method_exists($this, 'getFirstMedia')) {
-            $m = $this->getFirstMedia('photos');
-            if ($m) {
-                $cover = [
-                    'src'    => $m->getUrl('card-webp'),
-                    'srcset' => ['webp' => $m->getUrl('thumb-webp').' 240w, '.$m->getUrl('card-webp').' 600w, '.$m->getUrl('cover-webp').' 1200w'],
-                    'sizes'  => '(min-width:1024px) 50vw, 100vw',
-                    'width'  => 1200, 'height' => 800, 'format' => 'webp',
-                ];
-            }
+        if ($coverMedia) {
+            $srcset = [];
+            if ($coverMedia->hasGeneratedConversion('thumb-webp')) $srcset[] = $coverMedia->getUrl('thumb-webp').' 240w';
+            if ($coverMedia->hasGeneratedConversion('card-webp'))  $srcset[] = $coverMedia->getUrl('card-webp').' 600w';
+            if ($coverMedia->hasGeneratedConversion('cover-webp')) $srcset[] = $coverMedia->getUrl('cover-webp').' 1200w';
+
+            $cover = [
+                'src'        => $coverMedia->hasGeneratedConversion('cover-webp') ? $coverMedia->getUrl('cover-webp') : $coverMedia->getUrl(),
+                'srcset'     => ['webp' => $srcset ? implode(', ', $srcset) : null],
+                'sizes'      => '(min-width:1024px) 50vw, 100vw',
+                'caption_ja' => $coverMedia->getCustomProperty('caption_ja'),
+                'caption_en' => $coverMedia->getCustomProperty('caption_en'),
+                'is_cover'   => (bool)$coverMedia->getCustomProperty('is_cover'),
+            ];
         }
+
+        // ギャラリー
+        $photos = $this->getMedia('photos')->map(function ($m) {
+            $srcset = [];
+            if ($m->hasGeneratedConversion('thumb-webp')) $srcset[] = $m->getUrl('thumb-webp').' 240w';
+            if ($m->hasGeneratedConversion('card-webp'))  $srcset[] = $m->getUrl('card-webp').' 600w';
+
+            return [
+                'src'        => $m->hasGeneratedConversion('card-webp') ? $m->getUrl('card-webp') : $m->getUrl(),
+                'srcset'     => ['webp' => $srcset ? implode(', ', $srcset) : null],
+                'caption_ja' => $m->getCustomProperty('caption_ja'),
+                'caption_en' => $m->getCustomProperty('caption_en'),
+                'is_cover'   => (bool)$m->getCustomProperty('is_cover'),
+            ];
+        })->values();
 
         return [
             'id' => $this->id,
@@ -43,6 +69,7 @@ class CulturalSiteResource extends JsonResource
             'rating' => $this->rating,
             'tags' => $this->tags->map(fn($t) => ['name' => $t->name, 'slug' => $t->slug])->values(),
             'cover_photo' => $cover,
+            'photos'      => $photos,
         ];
     }
 }
