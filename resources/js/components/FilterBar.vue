@@ -27,7 +27,7 @@
   </div>
 
     <!-- タグ（トグル式） -->
-    <div class="flex items-center justify-between">
+    <!-- <div class="flex items-center justify-between">
       <div class="font-semibold text-sm">タグ</div>
       <button class="text-sm underline" @click="clearTags" v-if="selectedTags.length">クリア</button>
     </div>
@@ -39,7 +39,7 @@
         :class="tagClass(selectedTags.includes(t.slug))">
         #{{ t.name }}
       </button>
-    </div>
+    </div> -->
 
     <!-- 並び替え -->
     <div class="flex items-center gap-2">
