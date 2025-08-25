@@ -20,7 +20,7 @@
       :aria-pressed="isActive('others')"
     >それ以外の城</button>
 
-    <button @click="rl({ name:'castles-top100' })" 
+    <button @click="router.push({ name:'cultural-list', params:{ locale: route.params.locale } })" 
     :class="chipClass(isActive('cultural'))"
     :aria-pressed="isActive('cultural')"
     >文化財</button>
