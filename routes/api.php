@@ -18,4 +18,6 @@ Route::prefix('{locale}')->group(function () {
     Route::get('/quiz', [QuizController::class, 'random']);
     Route::get('/cultural-sites', [CulturalSiteController::class, 'index']);
     Route::get('/cultural-sites/{slug}', [CulturalSiteController::class, 'show']);
+    Route::get('/cultural-sites/{slug}', [CulturalSiteController::class,'show'])
+    ->name('api.cultural-sites.show');
 });
