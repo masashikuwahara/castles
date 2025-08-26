@@ -23,7 +23,7 @@
       <div class="mt-6 flex flex-wrap gap-2">
         <router-link v-for="t in p.tags || []" :key="t.slug"
           class="text-xs px-2 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
-          :to="rl({ name:'tag' })">
+          :to="{ name:'tag', params:{ locale: $route.params.locale, slug: t.slug } }">
           #{{ t.name }}
         </router-link>
       </div>
