@@ -161,8 +161,8 @@ const meta = computed(() => site.value?.meta || {})
 const PERIOD_SLUGS = ['joumon','yayoi','kofun','asuka','nara','heian','kamakura','muromachi','edo','meiji']
 const TYPE_SLUGS   = ['kofun','kaizuka','kyoseki','teraato','jokaku-ato','isekI','jinya-ato','gokoku','sekiheki']
 
-const periods = computed(() => (site.value?.tags || []).filter(t => PERIOD_SLUGS.includes(t.slug)).map(t => t.name))
-const siteTypes = computed(() => (site.value?.tags || []).filter(t => TYPE_SLUGS.includes(t.slug)).map(t => t.name))
+// const periods = computed(() => (site.value?.tags || []).filter(t => PERIOD_SLUGS.includes(t.slug)).map(t => t.name))
+// const siteTypes = computed(() => (site.value?.tags || []).filter(t => TYPE_SLUGS.includes(t.slug)).map(t => t.name))
 
 function gmapsEmbed(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}&hl=${loc.value}&z=15&output=embed`
@@ -188,6 +188,8 @@ watchEffect(async () => {
 const gallery = computed(() => {
   const arr = site.value?.photos || []
   const lang = locale.value
-  return arr.map(p => ({ ...p, caption: lang === 'ja' ? p.caption_ja : p.caption_en }))
+  return arr
+  .filter(p => !p.is_cover)
+  .map(p => ({ ...p, caption: lang === 'ja' ? p.caption_ja : p.caption_en }))
 })
 </script>

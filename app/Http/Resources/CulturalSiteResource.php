@@ -72,7 +72,11 @@ class CulturalSiteResource extends JsonResource
             'meta' => $this->meta,
             'tags' => $this->tags->map(fn($t) => ['name' => $t->name, 'slug' => $t->slug])->values(),
             'cover_photo' => $cover,
-            'photos'      => $photos,
+            // 'photos'      => $photos,
+            'photos' => $this->when(
+                $request->routeIs('api.cultural-sites.show'), // ルートに名前を付けておく
+                $photos
+            ),
         ];
     }
 }
