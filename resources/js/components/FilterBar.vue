@@ -1,7 +1,7 @@
 <template>
   <div class="mb-4 space-y-3">
     <!-- カテゴリ（タブ/セグメント） -->
-  <div class="flex flex-wrap gap-2">
+  <div v-if="props.mode === 'castle'" class="flex flex-wrap gap-2">
     <button
       @click="apply({ type:'castle', top100:1 })"
       :class="chipClass(isActive('top100'))"
@@ -56,12 +56,18 @@
 <script setup>
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useLocaleRoute } from '../composables/useLocaleRoute'
 import { listTags } from '../lib/api'
 import { usePlacesStore } from '../stores/places'
+
+const props = defineProps({
+  mode: { type: String, default: 'castle' } // 'castle' | 'cultural'
+})
 
 const route = useRoute()
 const router = useRouter()
 const store = usePlacesStore()
+const { rl } = useLocaleRoute()
 
 const tags = ref([])
 const selectedTags = ref([])
@@ -74,10 +80,26 @@ const active = computed(() => {
   if (q.others === '1' || q.others === 1) return 'others'
   if (q.top100c === '1' || q.top100c === 1) return 'top100c'
   if (q.top100 === '1' || q.top100 === 1) return 'top100'
-  // どれでもなければ「100名城」でもなく「文化財」でもない＝全部表示だが、
-  // UI上は未選択にならないよう、とりあえず others 以外の「城」代表として top100 を基準にしない。
   return '' // 未選択状態
 })
+
+function goto(params) {
+  if (props.mode === 'cultural') {
+    router.replace( rl({ name:'cultural-list', query: { ...params, page: undefined } }) )
+  } else {
+    router.replace( rl({ name:'list', query: { ...params, page: undefined } }) )
+  }
+}
+
+function pushQuery(nextQuery = {}) {
+  const q = { ...route.query, ...nextQuery, page: undefined }
+
+  if (props.mode === 'cultural') {
+    router.replace( rl({ name: 'cultural-list', query: q }) )
+  } else {
+    router.replace( rl({ name: 'list', query: q }) )
+  }
+}
 
 function btnClass(isActive) {
   return [

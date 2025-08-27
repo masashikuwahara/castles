@@ -7,7 +7,7 @@
     </div>
 
     <!-- フィルタバー -->
-    <FilterBar />
+    <FilterBar mode="cultural" />
 
     <div v-if="store.loading">Loading...</div>
     <div v-else-if="store.error" class="p-3 bg-red-50 text-red-700 rounded mb-4">
@@ -17,11 +17,11 @@
       <PlaceCard v-for="p in store.items" :key="p.id" :place="p" />
     </div>
 
-    <div class="mt-6 flex gap-2" v-if="safeLinks.length">
+    <!-- <div class="mt-6 flex gap-2" v-if="safeLinks.length">
       <button v-for="(l, idx) in safeLinks" :key="idx" :disabled="!l.url"
               @click="goto(l.url)" class="px-3 py-1 border rounded disabled:opacity-50"
               v-html="l.label" />
-    </div>
+    </div> -->
 
     <!-- ページャ -->
      <Pagination
@@ -49,11 +49,11 @@ const router = useRouter()
 const store = useCulturalsStore()
 
 const q = ref(route.query.q || '')
-const safeLinks = computed(() =>
-Array.isArray(store.pagination?.links)
-? store.pagination.links.map(l => ({ ...l, url: l.url || null }))
-: []
-)
+// const safeLinks = computed(() =>
+// Array.isArray(store.pagination?.links)
+// ? store.pagination.links.map(l => ({ ...l, url: l.url || null }))
+// : []
+// )
 
 function reload() {
   const params = { ...route.query, q: q.value || undefined, page: undefined }
@@ -66,6 +66,11 @@ watchEffect(() => {
 function goto(url) {
   const u = new URL(url)
   const page = u.searchParams.get('page')
+  const params = { ...route.query, page }
+  router.replace({ query: params })
+}
+
+function onPageChange(page) {
   const params = { ...route.query, page }
   router.replace({ query: params })
 }
