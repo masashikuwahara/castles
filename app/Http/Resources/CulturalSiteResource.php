@@ -30,6 +30,8 @@ class CulturalSiteResource extends JsonResource
                 'caption_ja' => $coverMedia->getCustomProperty('caption_ja'),
                 'caption_en' => $coverMedia->getCustomProperty('caption_en'),
                 'is_cover'   => (bool)$coverMedia->getCustomProperty('is_cover'),
+                'original'   => $coverMedia->getUrl(),
+                'full'       => $coverMedia->hasGeneratedConversion('cover-webp') ? $coverMedia->getUrl('cover-webp') : $coverMedia->getUrl(),
             ];
         }
 
@@ -40,11 +42,14 @@ class CulturalSiteResource extends JsonResource
             if ($m->hasGeneratedConversion('card-webp'))  $srcset[] = $m->getUrl('card-webp').' 600w';
 
             return [
+                'id'         => $m->id,
                 'src'        => $m->hasGeneratedConversion('card-webp') ? $m->getUrl('card-webp') : $m->getUrl(),
                 'srcset'     => ['webp' => $srcset ? implode(', ', $srcset) : null],
                 'caption_ja' => $m->getCustomProperty('caption_ja'),
                 'caption_en' => $m->getCustomProperty('caption_en'),
                 'is_cover'   => (bool)$m->getCustomProperty('is_cover'),
+                'original'   => $m->getUrl(),
+                'full'       => $m->hasGeneratedConversion('cover-webp') ? $m->getUrl('cover-webp') : $m->getUrl(),
             ];
         })->values();
 
