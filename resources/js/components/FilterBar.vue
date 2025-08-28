@@ -215,26 +215,33 @@ watch(() => route.query.sort, (v) => {
 })
 
 /* ==== cultural タグ ==== */
-const allTags = ref([])           // [{name,slug,count}]
-const selected = ref([])          // ['slug1','slug2']
+// const allTags = ref([])           // [{name,slug,count}]
+// const selected = ref([])          // ['slug1','slug2']
+
+const allCulturalTags = ref([])    // [{name,slug,count}]
+const selectedCultural = ref([])   // ['slug1','slug2']
 
 onMounted(async () => {
   if (props.mode !== 'cultural') return
   try {
     const { data } = await listCulturalTags(loc.value)
-    allTags.value = data.data || []
+    // allTags.value = data.data || []
+    allCulturalTags.value = data.data || []
   } catch {}
 })
 
 // URL → 選択状態 同期
 watch(() => route.query.tags, (v) => {
-  selected.value = (typeof v === 'string' && v.length)
+  // selected.value = (typeof v === 'string' && v.length)
+  selectedCultural.value = (typeof v === 'string' && v.length)
     ? v.split(',').filter(Boolean)
     : []
 }, { immediate: true })
 
-function toggleTag(slug) {
-  const set = new Set(selected.value)
+// function toggleTag(slug) {
+//   const set = new Set(selected.value)
+function toggleTagCultural(slug) {
+  const set = new Set(selectedCultural.value)
   set.has(slug) ? set.delete(slug) : set.add(slug)
   const tags = Array.from(set)
   pushQuery({ tags: tags.length ? tags.join(',') : undefined })
