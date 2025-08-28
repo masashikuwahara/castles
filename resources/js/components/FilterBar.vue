@@ -58,6 +58,7 @@ import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLocaleRoute } from '../composables/useLocaleRoute'
 import { listTags } from '../lib/api'
+import { listCulturalTags } from '../lib/api'
 import { usePlacesStore } from '../stores/places'
 
 const props = defineProps({
@@ -212,4 +213,30 @@ watch(() => route.query.tags, (v) => {
 watch(() => route.query.sort, (v) => {
   if (v) sort.value = v
 })
+
+/* ==== cultural タグ ==== */
+const allTags = ref([])           // [{name,slug,count}]
+const selected = ref([])          // ['slug1','slug2']
+
+onMounted(async () => {
+  if (props.mode !== 'cultural') return
+  try {
+    const { data } = await listCulturalTags(loc.value)
+    allTags.value = data.data || []
+  } catch {}
+})
+
+// URL → 選択状態 同期
+watch(() => route.query.tags, (v) => {
+  selected.value = (typeof v === 'string' && v.length)
+    ? v.split(',').filter(Boolean)
+    : []
+}, { immediate: true })
+
+function toggleTag(slug) {
+  const set = new Set(selected.value)
+  set.has(slug) ? set.delete(slug) : set.add(slug)
+  const tags = Array.from(set)
+  pushQuery({ tags: tags.length ? tags.join(',') : undefined })
+}
 </script>

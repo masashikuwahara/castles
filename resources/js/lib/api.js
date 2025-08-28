@@ -18,3 +18,6 @@ export const listCulturalSites = (locale, params={}) =>
 
 export const getCulturalSite = (locale, slug) =>
   api.get(`/${locale}/cultural-sites/${slug}`)
+
+export const listCulturalTags = (locale) =>
+  axios.get(`/api/${locale}/cultural/tags`);

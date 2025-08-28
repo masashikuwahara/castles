@@ -20,4 +20,5 @@ Route::prefix('{locale}')->group(function () {
     Route::get('/cultural-sites/{slug}', [CulturalSiteController::class, 'show']);
     Route::get('/cultural-sites/{slug}', [CulturalSiteController::class,'show'])
     ->name('api.cultural-sites.show');
+    Route::get('/cultural/tags', [TagController::class, 'cultural']);
 });
