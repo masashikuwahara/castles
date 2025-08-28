@@ -15,7 +15,9 @@ class CulturalSiteController extends Controller
         $q = CulturalSite::query()
             ->with([
                 'translations' => fn($t) => $t->where('locale', $locale),
-                'prefecture', 'tags'
+                'prefecture', 
+                'tags',
+                'media' => fn($m)=>$m->where('collection_name','photos'),
             ]);
 
         // 検索
@@ -46,6 +48,14 @@ class CulturalSiteController extends Controller
             '-rating'  => $q->orderByDesc('rating'),
             default    => $q->latest('id'),
         };
+
+        // ★ タグ（カンマ区切り / AND で絞る）
+        if ($tagsStr = $req->query('tags')) {
+            $slugs = collect(explode(',', $tagsStr))->filter()->unique()->values();
+            foreach ($slugs as $slug) {
+                $q->whereHas('tags', fn($t)=>$t->where('slug', $slug));
+            }
+        }
 
         return CulturalSiteResource::collection(
             $q->paginate(24)->appends($req->query())
