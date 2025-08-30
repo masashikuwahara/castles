@@ -75,7 +75,7 @@
             <router-link
               v-for="t in site.tags" :key="t.slug"
               class="text-xs px-2 py-0.5 bg-gray-100 rounded-full hover:bg-gray-200"
-              :to="rl({ name:'list', query:{ tags: t.slug, type: 'cultural' } })">
+              :to="rl({ name:'cultural-list', query:{ tags: t.slug } })">
               #{{ t.name }}
             </router-link>
           </div>
