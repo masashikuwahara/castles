@@ -10,62 +10,75 @@ use Illuminate\Http\Request;
 
 class PlaceController extends Controller
 {
-    public function index(string $locale, Request $req)
-    {
-        $q = Place::query()
-            ->with([
-                'translations' => fn($t)=>$t->where('locale', $locale),
-                'prefecture',
-                'tags',
-                'photos' => fn($p)=>$p->where('is_cover', true),
-            ])
-            ->when($req->type, fn($x,$v)=>$x->where('type',$v)) // castle|cultural_property
-            ->when($req->boolean('top100'), fn($x)=>$x->where('is_top100',true))
-            ->when($req->boolean('top100c'), fn($x)=>$x->where('is_top100_continued',true))
-            ->when($req->boolean('others'), fn($x) =>$x->where('type','castle')->where('is_top100', false)->where('is_top100_continued', false))
-            ->when($req->pref, fn($x,$v)=>$x->where('prefecture_id',$v))
-            ->when($req->tags, function($x,$v){
-                $tags = array_filter(explode(',', $v));
-                $x->whereHas('tags', fn($q)=>$q->whereIn('slug',$tags)->orWhereIn('name',$tags));
-            })
-            ->when($req->q, function($x,$v) use ($locale) {
-                // PlaceTranslation に FULLTEXT を貼ると高速化可（後述）
-                $x->whereHas('translations', function($t) use ($v,$locale){
-                    $t->where('locale',$locale)
-                      ->where(function($w) use ($v){
-                          $w->where('name','like',"%{$v}%")
-                            ->orWhere('summary','like',"%{$v}%");
-                      });
-                });
-            });
+    public function index(Request $req, string $locale)
+{
+    $q = \App\Models\Place::query()
+        ->with([
+            'translations' => fn($t)=>$t->where('locale',$locale),
+            'prefecture','tags',
+            'media' => fn($m)=>$m->where('collection_name','photos'),
+            'photos', // 旧テーブル使っているなら
+        ]);
 
-        // ソート：人気順/新着/名前
-        $sort = $req->get('sort','rating_desc');
-        match ($sort) {
-            'name_asc'   => $q->orderBy(PlaceTranslation::select('name')->whereColumn('place_id','places.id')->where('locale',$locale)),
-            'created_desc' => $q->orderBy('places.created_at','desc'),
-            default      => $q->orderBy('rating','desc'),
-        };
-
-        return PlaceResource::collection($q->paginate(24));
+    // フリーテキスト
+    if ($s = trim((string)$req->query('q',''))) {
+        $q->whereHas('translations', function($t) use ($s,$locale){
+            $t->where('locale',$locale)
+              ->where(function($w) use ($s){
+                  $w->where('name','like',"%{$s}%")
+                    ->orWhere('summary','like',"%{$s}%");
+              });
+        });
     }
+
+    // 100名城/続100/その他
+    if ($req->boolean('top100'))  $q->where('is_top100', true);
+    if ($req->boolean('top100c')) $q->where('is_top100_continued', true);
+    if ($req->boolean('others'))  $q->where('is_top100', false)->where('is_top100_continued', false);
+
+    // タグ（AND）
+    if ($tagsStr = $req->query('tags')) {
+        foreach (collect(explode(',', $tagsStr))->filter() as $slug) {
+            $q->whereHas('tags', fn($t)=>$t->where('slug',$slug));
+        }
+    }
+
+    $p = $q->paginate(24)->withQueryString();
+    // 念のため null モデルは捨てる（ほぼ出ませんが堅牢化）
+    $p->setCollection($p->getCollection()->filter());
+
+    return \App\Http\Resources\PlaceResource::collection($p);
+}
+
+
 
     public function show(string $locale, string $slug)
     {
-        // 1) 言語別スラッグ一致を優先
         $pt = PlaceTranslation::where('locale',$locale)->where('slug_localized',$slug)->first();
         $place = $pt?->place()->with([
             'translations'=>fn($t)=>$t->where('locale',$locale),
             'prefecture','tags','photos'
         ])->first();
 
-        // 2) 見つからなければ共通 slug で検索
         if (!$place) {
             $place = Place::where('slug',$slug)->with([
                 'translations'=>fn($t)=>$t->where('locale',$locale),
                 'prefecture','tags','photos'
             ])->firstOrFail();
         }
+
+        $place = Place::query()
+        ->with([
+            'translations' => fn($t) => $t->where('locale', $locale),
+            'prefecture','tags',
+            'media' => fn($m) => $m->where('collection_name','photos'),
+            'photos'
+        ])
+        ->where(function($q) use ($slug, $locale) {
+            $q->whereHas('translations', fn($t)=>$t->where('locale',$locale)->where('slug_localized',$slug))
+            ->orWhere('slug', $slug);
+        })
+        ->firstOrFail();
 
         return new PlaceResource($place);
     }
