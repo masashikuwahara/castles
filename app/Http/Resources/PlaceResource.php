@@ -9,7 +9,9 @@ class PlaceResource extends JsonResource
 {
     public function toArray($request)
     {
-        $t = $this->whenLoaded('translations')->first();
+        $t = $this->relationLoaded('translations')
+        ? $this->translations->first()
+        : null;
 
         // ---------- cover ----------
         $cover = null;
