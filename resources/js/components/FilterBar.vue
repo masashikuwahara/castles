@@ -94,8 +94,8 @@ function goto(params) {
 
 function pushQuery(nextQuery = {}) {
   const q = { ...route.query, ...nextQuery, page: undefined }
-
   if (props.mode === 'cultural') {
+    delete q.type; delete q.period; delete q.site_type
     router.replace( rl({ name: 'cultural-list', query: q }) )
   } else {
     router.replace( rl({ name: 'list', query: q }) )

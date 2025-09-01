@@ -18,6 +18,8 @@ export const usePlacesStore = defineStore('places', {
         const { data } = await listPlaces(locale, params)
         if (rid !== this._req.list) return
         this.items = data.data
+        const rows = Array.isArray(data.data) ? data.data : []
+        this.items = rows.filter(Boolean)
         this.pagination = { ...data.meta, links: data.meta?.links || [] }
       } catch (e) {
         this.error = e?.response?.data || e.message || 'Request failed'

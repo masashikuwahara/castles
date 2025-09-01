@@ -32,11 +32,6 @@ const router = createRouter({
       path:'/:locale(ja|en)/castles/others',
       redirect: to => ({ name:'list', params:{ locale: to.params.locale }, query:{ type:'castle', others:1 } })
     },
-    
-    // 文化財一覧は既存の一覧を再利用（type=cultural を付けて転送）
-    // { name: 'cultural-list', path: '/:locale(ja|en)/cultural',
-    //   redirect: to => ({ name: 'list', params: { locale: to.params.locale }, query: { type: 'cultural' } })
-    // },
 
     { name: 'cultural-list', path: '/:locale(ja|en)/cultural', component: CulturalList },
 
@@ -62,7 +57,6 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  // ルートが :locale を持つのに params.locale が無ければ補完
   const needsLocale =
     to.matched.some(m => /\/:locale(\(|$)/.test(m.path)) &&
     (typeof to.params.locale !== 'string' || !to.params.locale)
@@ -75,7 +69,7 @@ router.beforeEach((to, from, next) => {
     return next({
       ...to,
       params: { ...to.params, locale: fallback },
-      replace: true, // 履歴を汚さない
+      replace: true,
     })
   }
   next()
