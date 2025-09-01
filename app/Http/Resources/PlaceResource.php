@@ -13,7 +13,6 @@ class PlaceResource extends JsonResource
         ? $this->translations->first()
         : null;
 
-        // ---------- cover ----------
         $cover = null;
         $photoItems = collect();
 
@@ -118,8 +117,13 @@ class PlaceResource extends JsonResource
             'is_top100'         => (bool) $this->is_top100,
             'is_top100_continued' => (bool) $this->is_top100_continued,
 
-            'tags' => $this->whenLoaded('tags', fn() =>
-                $this->tags->map(fn($t) => ['name' => $t->name, 'slug' => $t->slug])->values()
+            // 'tags' => $this->whenLoaded('tags', fn() =>
+            //     $this->tags->map(fn($t) => ['name' => $t->name, 'slug' => $t->slug])->values()
+            // ),
+            'tags' => $this->when(
+                $this->relationLoaded('tags'),
+                fn() => $this->tags->map(fn($tag) => ['name' => $tag->name, 'slug' => $tag->slug])->values(),
+                []
             ),
 
             'cover_photo' => $cover,

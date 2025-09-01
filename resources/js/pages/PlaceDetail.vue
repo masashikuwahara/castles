@@ -1,4 +1,3 @@
-<!-- resources/js/pages/PlaceDetail.vue -->
 <template>
   <div>
     <h2 class="text-xl font-bold mb-3">{{ place?.name }}</h2>
@@ -160,7 +159,6 @@ const store = usePlacesStore()
 const loading = ref(true)
 const error = ref('')
 
-// モデル
 const place = computed(() => store.current)
 
 // カバー画像（言語別キャプション）
