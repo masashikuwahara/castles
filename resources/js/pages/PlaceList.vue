@@ -16,7 +16,11 @@
       {{ store.error.message || store.error }}
     </div>
     <div v-else class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      <PlaceCard v-for="p in store.items" :key="p.id" :place="p" />
+      <PlaceCard
+        v-for="p in safeItems"
+        :key="safeKey(p)"
+        :place="p"
+      />
     </div>
 
     <!-- ページャ -->
@@ -48,9 +52,12 @@ const { t } = useI18n()
 
 const q = ref(route.query.q || '')
 
-const hasPager = computed(() =>
-!!(store.pagination && Array.isArray(store.pagination.links) && store.pagination.links.length)
-)
+const safeItems = computed(() => {
+  const arr = Array.isArray(store.items) ? store.items : []
+  return arr.filter(p => p && (p.id || p.slug || p.slug_localized))
+})
+
+const safeKey = (p) => p.id ?? `${p.type || 'place'}:${p.slug || p.slug_localized}`
 
 function reload() {
   const params = { ...route.query, q: q.value || undefined, page: undefined }
@@ -69,7 +76,6 @@ watchEffect(() => {
 watch(() => route.query.q, (v) => { q.value = v || '' })
 
 function goto(url) {
-  // APIのページネーションURLをクエリに反映（page=番号 だけ拾う）
   const u = new URL(url)
   const page = u.searchParams.get('page')
   const params = { ...route.query, page }

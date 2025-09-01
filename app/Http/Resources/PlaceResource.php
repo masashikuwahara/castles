@@ -2,103 +2,126 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Schema;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class PlaceResource extends JsonResource
 {
     public function toArray($request)
     {
-        // 呼び出し側で locale に絞った translations を preload している想定
-        $t = $this->translations->first();
+        $t = $this->whenLoaded('translations')->first();
+
+        // ---------- cover ----------
+        $cover = null;
+        $photoItems = collect();
+
+        if (method_exists($this, 'getMedia')) {
+            $collection = $this->getMedia('photos');
+
+            /** @var Media|null $coverMedia */
+            $coverMedia = $collection->first(fn($m) => (bool)$m->getCustomProperty('is_cover')) ?? $collection->first();
+
+            if ($coverMedia) {
+                $srcset = [];
+                if ($coverMedia->hasGeneratedConversion('thumb-webp')) $srcset[] = $coverMedia->getUrl('thumb-webp').' 240w';
+                if ($coverMedia->hasGeneratedConversion('card-webp'))  $srcset[] = $coverMedia->getUrl('card-webp').' 600w';
+                if ($coverMedia->hasGeneratedConversion('cover-webp')) $srcset[] = $coverMedia->getUrl('cover-webp').' 1200w';
+
+                $cover = [
+                    'src'        => $coverMedia->hasGeneratedConversion('cover-webp') ? $coverMedia->getUrl('cover-webp') : $coverMedia->getUrl(),
+                    'srcset'     => ['webp' => $srcset ? implode(', ', $srcset) : null],
+                    'sizes'      => '(min-width:1024px) 60vw, 100vw',
+                    'caption_ja' => $coverMedia->getCustomProperty('caption_ja'),
+                    'caption_en' => $coverMedia->getCustomProperty('caption_en'),
+                    'is_cover'   => (bool)$coverMedia->getCustomProperty('is_cover'),
+                    // ライトボックス用
+                    'id'       => $coverMedia->id,
+                    'original' => $coverMedia->getUrl(),
+                    'full'     => $coverMedia->hasGeneratedConversion('cover-webp') ? $coverMedia->getUrl('cover-webp') : $coverMedia->getUrl(),
+                ];
+            }
+
+            $photoItems = $collection
+                ->when($cover, fn($col) => $col->reject(fn($m) => $m->id === $cover['id']))
+                ->map(function (Media $m) {
+                    $srcset = [];
+                    if ($m->hasGeneratedConversion('thumb-webp')) $srcset[] = $m->getUrl('thumb-webp').' 240w';
+                    if ($m->hasGeneratedConversion('card-webp'))  $srcset[] = $m->getUrl('card-webp').' 600w';
+                    return [
+                        'id'         => $m->id,
+                        'src'        => $m->hasGeneratedConversion('card-webp') ? $m->getUrl('card-webp') : $m->getUrl(),
+                        'srcset'     => ['webp' => $srcset ? implode(', ', $srcset) : null],
+                        'caption_ja' => $m->getCustomProperty('caption_ja'),
+                        'caption_en' => $m->getCustomProperty('caption_en'),
+                        'is_cover'   => (bool)$m->getCustomProperty('is_cover'),
+                        'original'   => $m->getUrl(),
+                        'full'       => $m->hasGeneratedConversion('cover-webp') ? $m->getUrl('cover-webp') : $m->getUrl(),
+                    ];
+                })->values();
+        }
+
+        // 旧 photos テーブルのフォールバック（あれば）
+        if (!$cover && $this->relationLoaded('photos') && $this->photos->count()) {
+            $first = $this->photos->first();
+            $cover = [
+                'src'    => asset($first->path),
+                'srcset' => ['webp' => null],
+                'sizes'  => '(min-width:1024px) 60vw, 100vw',
+                'caption_ja' => $first->caption_ja ?? null,
+                'caption_en' => $first->caption_en ?? null,
+                'is_cover'   => (bool)($first->is_cover ?? true),
+                'id'       => null,
+                'original' => asset($first->path),
+                'full'     => asset($first->path),
+            ];
+            $photoItems = $this->photos->skip(1)->map(fn($p) => [
+                'id'         => null,
+                'src'        => asset($p->path),
+                'srcset'     => ['webp' => null],
+                'caption_ja' => $p->caption_ja ?? null,
+                'caption_en' => $p->caption_en ?? null,
+                'is_cover'   => (bool)($p->is_cover ?? false),
+                'original'   => asset($p->path),
+                'full'       => asset($p->path),
+            ])->values();
+        }
 
         return [
-            'id' => $this->id,
-            'type' => $this->type,
+            'id'   => $this->id,
+            'type' => 'castle',
             'slug' => $this->slug,
-            'slug_localized' => optional($t)->slug_localized,
-            'name' => optional($t)->name,
+            'slug_localized' => optional($t)->slug_localized ?? $this->slug,
+            'name'    => optional($t)->name ?? $this->slug,
             'summary' => optional($t)->summary,
+
             'prefecture' => [
                 'id' => optional($this->prefecture)->id,
                 'name_ja' => optional($this->prefecture)->name_ja,
                 'name_en' => optional($this->prefecture)->name_en,
             ],
             'city' => $this->city,
-            'lat' => $this->lat,
-            'lng' => $this->lng,
-            'built_year' => $this->built_year,
-            'abolished_year' => $this->abolished_year,
-            'castle_structure' => $this->castle_structure,
-            'tenshu_structure' => $this->tenshu_structure,
-            'founder' => $this->founder,
-            'main_renovators' => $this->main_renovators,
-            'main_lords' => $this->main_lords,
+            'lat'  => $this->lat,
+            'lng'  => $this->lng,
+
+            'built_year'        => $this->built_year,
+            'abolished_year'    => $this->abolished_year,
+            'castle_structure'  => $this->castle_structure,
+            'tenshu_structure'  => $this->tenshu_structure,
+            'founder'           => $this->founder,
+            'main_renovators'   => $this->main_renovators,
+            'main_lords'        => $this->main_lords,
             'designated_heritage' => $this->designated_heritage,
-            'remains' => $this->remains,
-            'rating' => (int) $this->rating,
-            'is_top100' => (bool) $this->is_top100,
+            'remains'           => $this->remains,
+            'rating'            => $this->rating,
+            'is_top100'         => (bool) $this->is_top100,
             'is_top100_continued' => (bool) $this->is_top100_continued,
+
             'tags' => $this->whenLoaded('tags', fn() =>
-                $this->tags->map(fn($tag)=>['name'=>$tag->name,'slug'=>$tag->slug])
+                $this->tags->map(fn($t) => ['name' => $t->name, 'slug' => $t->slug])->values()
             ),
-            // 'cover_photo' => $this->whenLoaded('photos', function () {
-            //     $cover = $this->photos->firstWhere('is_cover', true) ?? $this->photos->first();
-            //     return $cover ? new PhotoResource($cover) : null;
-            'cover_photo' => $this->whenLoaded('photos', function () {
-            // 既存Photoテーブルのカバー（is_cover）を優先。なければ最初のMedia
-            $coverPhoto = $this->photos->firstWhere('is_cover', true) ?? $this->photos->first();
-            $media = $this->getFirstMedia('photos'); // MediaLibraryの先頭（取り込み済み前提）
 
-            if (!$media) {
-                // Media未移行時は従来のpathだけ返す（フォールバック）
-                return $coverPhoto ? [
-                    'src' => $coverPhoto->path,
-                    'width' => null, 'height' => null,
-                    'srcset' => null, 'sizes' => null,
-                    'format' => 'orig',
-                ] : null;
-            }
-
-            if (!Schema::hasTable('media')) {
-                $coverPhoto = $this->photos->firstWhere('is_cover', true) ?? $this->photos->first();
-                return $coverPhoto ? [
-                    'src' => $coverPhoto->path,
-                    'srcset' => null, 'sizes' => null,
-                    'width' => null, 'height' => null,
-                    'format' => 'orig', 'original' => $coverPhoto->path,
-                ] : null;
-            }
-
-            // 生成済みURL（publicディスク → /storage/...）
-            $webp = [
-                'thumb' => $media->getUrl('thumb-webp'),
-                'card'  => $media->getUrl('card-webp'),
-                'cover' => $media->getUrl('cover-webp'),
-            ];
-            // AVIFを有効化したら↓も追加
-            // $avif = [
-            //     'thumb' => $media->getUrl('thumb-avif'),
-            //     'card'  => $media->getUrl('card-avif'),
-            //     'cover' => $media->getUrl('cover-avif'),
-            // ];
-
-            return [
-                // 既定のsrcは中サイズ
-                'src'    => $webp['card'],
-                'srcset' => [
-                    'webp' => "{$webp['thumb']} 240w, {$webp['card']} 600w, {$webp['cover']} 1200w",
-                    // 'avif' => "{$avif['thumb']} 240w, {$avif['card']} 600w, {$avif['cover']} 1200w",
-                ],
-                'sizes'  => '(min-width:1024px) 25vw, (min-width:768px) 33vw, 50vw',
-                // 任意：想定サイズ（レイアウトシフト防止・概算でOK）
-                'width'  => 600,
-                'height' => 400,
-                'format' => 'webp',
-                'original' => $media->getUrl(),
-            ];
-            }),
+            'cover_photo' => $cover,
+            'photos'      => $photoItems,
         ];
     }
 }
