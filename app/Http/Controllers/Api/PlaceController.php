@@ -17,7 +17,7 @@ class PlaceController extends Controller
             'translations' => fn($t)=>$t->where('locale',$locale),
             'prefecture','tags',
             'media' => fn($m)=>$m->where('collection_name','photos'),
-            'photos', // 旧テーブル使っているなら
+            // 'photos',
         ]);
 
     // フリーテキスト
@@ -54,26 +54,25 @@ class PlaceController extends Controller
 
     public function show(string $locale, string $slug)
     {
-        $pt = PlaceTranslation::where('locale',$locale)->where('slug_localized',$slug)->first();
-        $place = $pt?->place()->with([
-            'translations'=>fn($t)=>$t->where('locale',$locale),
-            'prefecture','tags','photos'
-        ])->first();
+        // $pt = PlaceTranslation::where('locale',$locale)->where('slug_localized',$slug)->first();
+        // $place = $pt?->place()->with([
+        //     'translations'=>fn($t)=>$t->where('locale',$locale),
+        //     'prefecture','tags','photos'
+        // ])->first();
 
-        if (!$place) {
-            $place = Place::where('slug',$slug)->with([
-                'translations'=>fn($t)=>$t->where('locale',$locale),
-                'prefecture','tags','photos'
-            ])->firstOrFail();
-        }
+        // if (!$place) {
+        //     $place = Place::where('slug',$slug)->with([
+        //         'translations'=>fn($t)=>$t->where('locale',$locale),
+        //         'prefecture','tags','photos'
+        //     ])->firstOrFail();
+        // }
 
         $place = Place::query()
         ->with([
-            'translations' => fn($t) => $t->where('locale', $locale),
+            'translations' => fn($t) => $t->where('locale',$locale),
             'prefecture','tags',
             'media' => fn($m) => $m->where('collection_name','photos'),
-            'photos'
-        ])
+            ])
         ->where(function($q) use ($slug, $locale) {
             $q->whereHas('translations', fn($t)=>$t->where('locale',$locale)->where('slug_localized',$slug))
             ->orWhere('slug', $slug);

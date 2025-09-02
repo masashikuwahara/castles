@@ -15,12 +15,11 @@ class PlaceResource extends JsonResource
 
         $cover = null;
         $photoItems = collect();
-
-        if (method_exists($this, 'getMedia')) {
-            $collection = $this->getMedia('photos');
+        $collection = $this->resource->getMedia('photos');
 
             /** @var Media|null $coverMedia */
-            $coverMedia = $collection->first(fn($m) => (bool)$m->getCustomProperty('is_cover')) ?? $collection->first();
+            $coverMedia = $collection->first(fn($m) => (bool)$m->getCustomProperty('is_cover')) 
+            ?? $collection->first();
 
             if ($coverMedia) {
                 $srcset = [];
@@ -59,33 +58,6 @@ class PlaceResource extends JsonResource
                         'full'       => $m->hasGeneratedConversion('cover-webp') ? $m->getUrl('cover-webp') : $m->getUrl(),
                     ];
                 })->values();
-        }
-
-        // 旧 photos テーブルのフォールバック（あれば）
-        if (!$cover && $this->relationLoaded('photos') && $this->photos->count()) {
-            $first = $this->photos->first();
-            $cover = [
-                'src'    => asset($first->path),
-                'srcset' => ['webp' => null],
-                'sizes'  => '(min-width:1024px) 60vw, 100vw',
-                'caption_ja' => $first->caption_ja ?? null,
-                'caption_en' => $first->caption_en ?? null,
-                'is_cover'   => (bool)($first->is_cover ?? true),
-                'id'       => null,
-                'original' => asset($first->path),
-                'full'     => asset($first->path),
-            ];
-            $photoItems = $this->photos->skip(1)->map(fn($p) => [
-                'id'         => null,
-                'src'        => asset($p->path),
-                'srcset'     => ['webp' => null],
-                'caption_ja' => $p->caption_ja ?? null,
-                'caption_en' => $p->caption_en ?? null,
-                'is_cover'   => (bool)($p->is_cover ?? false),
-                'original'   => asset($p->path),
-                'full'       => asset($p->path),
-            ])->values();
-        }
 
         return [
             'id'   => $this->id,
@@ -94,7 +66,6 @@ class PlaceResource extends JsonResource
             'slug_localized' => optional($t)->slug_localized ?? $this->slug,
             'name'    => optional($t)->name ?? $this->slug,
             'summary' => optional($t)->summary,
-
             'prefecture' => [
                 'id' => optional($this->prefecture)->id,
                 'name_ja' => optional($this->prefecture)->name_ja,
@@ -103,7 +74,6 @@ class PlaceResource extends JsonResource
             'city' => $this->city,
             'lat'  => $this->lat,
             'lng'  => $this->lng,
-
             'built_year'        => $this->built_year,
             'abolished_year'    => $this->abolished_year,
             'castle_structure'  => $this->castle_structure,
@@ -116,16 +86,11 @@ class PlaceResource extends JsonResource
             'rating'            => $this->rating,
             'is_top100'         => (bool) $this->is_top100,
             'is_top100_continued' => (bool) $this->is_top100_continued,
-
-            // 'tags' => $this->whenLoaded('tags', fn() =>
-            //     $this->tags->map(fn($t) => ['name' => $t->name, 'slug' => $t->slug])->values()
-            // ),
             'tags' => $this->when(
                 $this->relationLoaded('tags'),
                 fn() => $this->tags->map(fn($tag) => ['name' => $tag->name, 'slug' => $tag->slug])->values(),
                 []
             ),
-
             'cover_photo' => $cover,
             'photos'      => $photoItems,
         ];

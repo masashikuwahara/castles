@@ -84,26 +84,6 @@
         </div>
       </section>
 
-      <!-- 写真ギャラリー -->
-      <section class="lg:col-span-3 mt-8" v-if="gallery.length">
-        <h3 class="font-semibold mb-2">Photos</h3>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <figure
-            v-for="(ph, i) in gallery"
-            :key="i"
-            class="rounded-lg overflow-hidden border bg-white cursor-zoom-in"
-            @click="openViewer(img ? i + 1 : i)"
-            role="button"
-            :aria-label="ph.caption || 'open photo'">
-            <picture>
-              <source v-if="ph.srcset?.webp" :srcset="ph.srcset.webp" type="image/webp" />
-              <img :src="ph.src" loading="lazy" decoding="async" alt="" class="w-full h-40 object-cover" />
-            </picture>
-            <figcaption v-if="ph.caption" class="px-2 py-1 text-xs text-gray-600">{{ ph.caption }}</figcaption>
-          </figure>
-        </div>
-      </section>
-
       <!-- ライトボックス -->
       <div
         v-if="viewerOpen"
@@ -142,6 +122,20 @@
       </aside>
     </div>
   </div>
+
+  <!-- ギャラリー -->
+  <section class="mt-8" v-if="gallery.length">
+    <h3 class="font-semibold mb-2">Photos</h3>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <figure v-for="(ph, i) in gallery" :key="ph.id || i" class="rounded-lg overflow-hidden border bg-white">
+        <picture>
+          <source v-if="ph.srcset?.webp" :srcset="ph.srcset.webp" type="image/webp" />
+          <img :src="ph.src" loading="lazy" decoding="async" alt="" class="w-full h-40 object-cover" />
+        </picture>
+        <figcaption v-if="ph.caption" class="px-2 py-1 text-xs text-gray-600">{{ ph.caption }}</figcaption>
+      </figure>
+    </div>
+  </section>
 </template>
 
 <script setup>
@@ -169,6 +163,15 @@ const img = computed(() => {
   return { ...c, caption: cap }
 })
 
+// ギャラリー（カバー除外、言語別キャプション）
+const gallery = computed(() => {
+  const arr = Array.isArray(place.value?.photos) ? place.value.photos : []
+  const lang = locale.value
+  return arr
+    .filter(p => !p.is_cover)
+    .map(p => ({ ...p, caption: lang === 'ja' ? p.caption_ja : p.caption_en }))
+})
+
 // Google Map
 function gmapsEmbed(lat, lng) {
   return `https://www.google.com/maps?q=${lat},${lng}&hl=${loc.value}&z=15&output=embed`
@@ -178,21 +181,12 @@ function gmapsEmbed(lat, lng) {
 watchEffect(async () => {
   loading.value = true; error.value = ''
   try {
-    await store.fetchOne(loc.value, route.params.slug)
+    await store.fetchOne(route.params.locale, route.params.slug)
   } catch (e) {
     error.value = e?.response?.data?.message || e.message || 'Failed to load'
   } finally {
     loading.value = false
   }
-})
-
-// ギャラリー（カバー除外、言語別キャプション）
-const gallery = computed(() => {
-  const arr = place.value?.photos || []
-  const lang = locale.value
-  return arr
-    .filter(p => !p.is_cover)
-    .map(p => ({ ...p, caption: lang === 'ja' ? p.caption_ja : p.caption_en }))
 })
 
 // ===== ライトボックス =====
