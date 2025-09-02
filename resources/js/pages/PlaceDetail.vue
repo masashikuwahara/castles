@@ -84,30 +84,6 @@
         </div>
       </section>
 
-      <!-- ライトボックス -->
-      <div
-        v-if="viewerOpen"
-        class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-        @click.self="closeViewer"
-      >
-        <button class="absolute top-4 right-4 text-white text-2xl" @click="closeViewer" aria-label="Close">✕</button>
-        <button class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl" @click="prev" aria-label="Prev">‹</button>
-        <button class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl" @click="next" aria-label="Next">›</button>
-
-        <div class="max-w-5xl max-h-[80vh]">
-          <img
-            :src="bigSrc"
-            class="max-w-full max-h-[80vh] object-contain"
-            decoding="async"
-            alt=""
-            @error="(e)=>{ const t=e.target; if(currentItem?.original && t.src!==currentItem.original){ t.src=currentItem.original } }"
-          />
-          <div v-if="currentItem?.caption" class="mt-2 text-center text-sm text-white/90">
-            {{ currentItem.caption }}
-          </div>
-        </div>
-      </div>
-
       <!-- サイド：地図など -->
       <aside>
         <div v-if="place.lat && place.lng" class="rounded-xl overflow-hidden border">
@@ -116,18 +92,21 @@
             class="w-full h-64" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
           </iframe>
         </div>
-        <div class="mt-4">
-          <router-link :to="rl({ name:'list' })" class="underline">一覧に戻る</router-link>
-        </div>
       </aside>
     </div>
   </div>
 
   <!-- ギャラリー -->
-  <section class="mt-8" v-if="gallery.length">
+  <section class="lg:col-span-3 mt-8" v-if="gallery.length">
     <h3 class="font-semibold mb-2">Photos</h3>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-      <figure v-for="(ph, i) in gallery" :key="ph.id || i" class="rounded-lg overflow-hidden border bg-white">
+      <figure
+        v-for="(ph, i) in gallery"
+        :key="i"
+        class="rounded-lg overflow-hidden border bg-white cursor-zoom-in"
+        @click="openViewer(img ? i + 1 : i)"
+        role="button"
+        :aria-label="ph.caption || 'open photo'">
         <picture>
           <source v-if="ph.srcset?.webp" :srcset="ph.srcset.webp" type="image/webp" />
           <img :src="ph.src" loading="lazy" decoding="async" alt="" class="w-full h-40 object-cover" />
@@ -136,6 +115,33 @@
       </figure>
     </div>
   </section>
+
+  <!-- ライトボックス（モーダル） -->
+  <div
+    v-if="viewerOpen"
+    class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+    @click.self="closeViewer"
+  >
+    <button class="absolute top-4 right-4 text-white text-2xl" @click="closeViewer" aria-label="Close">✕</button>
+    <button class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl" @click="prev" aria-label="Prev">‹</button>
+    <button class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl" @click="next" aria-label="Next">›</button>
+
+    <div class="max-w-5xl max-h-[80vh]">
+      <img
+        :src="bigSrc"
+        class="max-w-full max-h-[80vh] object-contain"
+        decoding="async"
+        alt=""
+        @error="(e)=>{ const t=e.target; if(currentItem?.original && t.src!==currentItem.original){ t.src=currentItem.original } }"
+      />
+      <div v-if="currentItem?.caption" class="mt-2 text-center text-sm text-white/90">
+        {{ currentItem.caption }}
+      </div>
+    </div>
+  </div>
+  <div class="mt-4">
+    <router-link :to="rl({ name:'list' })" class="underline">一覧に戻る</router-link>
+  </div>
 </template>
 
 <script setup>
