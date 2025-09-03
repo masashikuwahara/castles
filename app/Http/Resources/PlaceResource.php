@@ -93,6 +93,7 @@ class PlaceResource extends JsonResource
             ),
             'cover_photo' => $cover,
             'photos'      => $photoItems,
+            'meta'        => $this->meta ?? [],
         ];
     }
 }
