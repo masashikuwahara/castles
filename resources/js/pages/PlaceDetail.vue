@@ -70,6 +70,29 @@
           </div>
         </div>
 
+        <div v-if="Object.keys(meta).length" class="mt-6">
+          <h3 class="font-semibold mb-2">見学情報</h3>
+          <div class="grid sm:grid-cols-2 gap-4 text-sm">
+            <div v-if="meta.opening_hours">
+              <div class="text-gray-600">開館時間</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.opening_hours }}</div>
+            </div>
+            <div v-if="meta.closed">
+              <div class="text-gray-600">休館日</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.closed }}</div>
+            </div>
+            <div v-if="meta.fees">
+              <div class="text-gray-600">料金</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.fees }}</div>
+            </div>
+            <div v-if="meta.notes">
+              <div class="text-gray-600">備考</div>
+              <div class="text-gray-800 whitespace-pre-line">{{ meta.notes }}</div>
+            </div>
+          </div>
+        </div>
+
+
         <!-- タグ -->
         <div v-if="(place.tags?.length)" class="mt-6">
           <h4 class="font-semibold text-sm text-gray-600 mb-2">タグ</h4>
@@ -160,6 +183,7 @@ const loading = ref(true)
 const error = ref('')
 
 const place = computed(() => store.current)
+const meta = computed(() => store.current?.meta || {})
 
 // カバー画像（言語別キャプション）
 const img = computed(() => {
