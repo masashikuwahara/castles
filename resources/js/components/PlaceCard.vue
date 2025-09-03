@@ -1,5 +1,5 @@
 <template>
-  <article class="bg-white rounded-xl shadow hover:shadow-md transition">
+  <article class="clay clay-pressable transition hover:-translate-y-0.5">
     <div v-if="cover" class="w-full h-40 overflow-hidden rounded-t-xl">
       <picture>
         <source v-if="cover.srcset?.webp" :srcset="cover.srcset.webp" type="image/webp" />

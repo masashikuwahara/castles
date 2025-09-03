@@ -12,10 +12,17 @@
 
     <!-- Pages (with ellipsis) -->
     <template v-for="(item, idx) in items" :key="idx">
-      <button
+      <!-- <button
         v-if="item.type === 'page'"
         class="px-3 py-1.5 rounded border text-sm"
         :class="item.n === page ? 'bg-gray-900 text-white border-gray-900' : 'hover:bg-gray-50'"
+        :aria-current="item.n === page ? 'page' : undefined"
+        @click="go(item.n)"
+      > -->
+      <button
+        v-if="item.type === 'page'"
+        class="clay-btn clay-pressable"
+        :class="page===current ? 'clay-btn--active' : 'hover:bg-gray-50'"
         :aria-current="item.n === page ? 'page' : undefined"
         @click="go(item.n)"
       >
@@ -40,10 +47,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-// Props: Laravelのpaginateが返すmetaを含むオブジェクト想定
 const props = defineProps({
   pagination: { type: Object, required: true },
-  // 何ページ分を前後に見せるか（例: 2 → 現在±2）
   radius: { type: Number, default: 2 },
 })
 
@@ -68,14 +73,12 @@ const items = computed(() => {
   const end = last.value
   const r = props.radius
 
-  // 範囲を作成（1, …, window, …, last）
   const pages = new Set([1, end])
   for (let i = cur - r; i <= cur + r; i++) {
     if (i >= 1 && i <= end) pages.add(i)
   }
   const sorted = Array.from(pages).sort((a, b) => a - b)
 
-  // 隣接していない箇所に省略記号
   const out = []
   for (let i = 0; i < sorted.length; i++) {
     const n = sorted[i]

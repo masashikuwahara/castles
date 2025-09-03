@@ -138,7 +138,7 @@
         <button class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl" @click="prev" aria-label="Prev">‹</button>
         <button class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl" @click="next" aria-label="Next">›</button>
 
-        <div class="max-w-5xl max-h-[80vh]">
+        <div class="clay max-w-5xl mx-auto p-2 md:p-4">
           <img
             :src="bigSrc"
             class="max-w-full max-h-[80vh] object-contain"
