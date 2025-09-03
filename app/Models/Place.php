@@ -14,7 +14,11 @@ class Place extends Model implements HasMedia
         'type','slug','prefecture_id','city','lat','lng',
         'built_year','abolished_year','castle_structure','tenshu_structure',
         'founder','main_renovators','main_lords','designated_heritage','remains',
-        'rating','is_top100','is_top100_continued',
+        'rating','is_top100','is_top100_continued','meta',
+    ];
+
+    protected $casts = [
+        'meta' => 'array',
     ];
 
     public function translations()
@@ -50,23 +54,5 @@ class Place extends Model implements HasMedia
         $this->addMediaConversion('cover-webp')
             ->format($format)->width(1200)->nonQueued();
     }
-
-    // public function registerMediaCollections(): void
-    // {
-    //     $this->addMediaCollection('photos')->useDisk('public');
-    // }
-
-    // public function registerMediaConversions(\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
-    // {
-    //     // 基本はWebP（横幅基準）。縦横比は元画像に追随
-    //     $this->addMediaConversion('thumb-webp')->width(240)->format('webp');
-    //     $this->addMediaConversion('card-webp')->width(600)->format('webp');
-    //     $this->addMediaConversion('cover-webp')->width(1200)->format('webp');
-
-    //     // ※AVIFを後で使うなら↓を有効化（サーバが対応してから）
-    //     // $this->addMediaConversion('thumb-avif')->width(240)->format('avif');
-    //     // $this->addMediaConversion('card-avif')->width(600)->format('avif');
-    //     // $this->addMediaConversion('cover-avif')->width(1200)->format('avif');
-    // }
 }
 
