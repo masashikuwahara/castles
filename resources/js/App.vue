@@ -71,39 +71,23 @@
       </div>
 
       <!-- モバイルメニュー -->
-      <div v-if="open" class="md:hidden border-t">
-        <nav class="max-w-7xl mx-auto px-4 py-2 grid gap-1 text-sm">
-          <router-link
-            :to="rl({ name:'castles-top100' })"
-            :class="linkClass('top100', true)"
-            @click="open=false"
-          >100名城</router-link>
-          <router-link
-            :to="rl({ name:'top100-continued' })"
-            :class="linkClass('top100c', true)"
-            @click="open=false"
-          >続100名城</router-link>
-          <router-link
-            :to="rl({ name:'others' })"
-            :class="linkClass('others', true)"
-            @click="open=false"
-          >それ以外の城</router-link>
-          <router-link
-            :to="rl({ name:'cultural-list' })"
-            :class="linkClass('cultural')"
-          >文化財</router-link>
-          <router-link
-            :to="rl({ name:'tags-index' })"
-            :class="linkClass('tags', true)"
-            @click="open=false"
-          >タグ</router-link>
+      <transition name="fade-slide">
+        <div v-show="open" class="md:hidden border-t">
+          <nav class="max-w-7xl mx-auto px-4 py-2 grid gap-1 text-sm">
+            <router-link :to="rl({ name:'castles-top100' })"     class="px-3 py-2 rounded hover:bg-gray-50">100名城</router-link>
+            <router-link :to="rl({ name:'castles-top100c' })"    class="px-3 py-2 rounded hover:bg-gray-50">続100名城</router-link>
+            <router-link :to="rl({ name:'castles-others' })"     class="px-3 py-2 rounded hover:bg-gray-50">それ以外の城</router-link>
+            <router-link :to="rl({ name:'cultural-list' })"      class="px-3 py-2 rounded hover:bg-gray-50">文化財</router-link>
+            <router-link :to="rl({ name:'tags-index' })"         class="px-3 py-2 rounded hover:bg-gray-50">タグ</router-link>
+            <router-link :to="rl({ name:'quiz' })"               class="px-3 py-2 rounded hover:bg-gray-50">クイズ</router-link>
 
-          <div class="flex items-center gap-2 pt-2">
-            <button class="px-3 py-1 rounded border" @click="switchLocale('ja')">日本語</button>
-            <button class="px-3 py-1 rounded border" @click="switchLocale('en')">EN</button>
-          </div>
-        </nav>
-      </div>
+            <div class="flex items-center gap-2 pt-2">
+              <button class="px-3 py-1 rounded border" @click="$router.push(rl({ params:{ locale:'ja' }}))">日本語</button>
+              <button class="px-3 py-1 rounded border" @click="$router.push(rl({ params:{ locale:'en' }}))">EN</button>
+            </div>
+          </nav>
+        </div>
+      </transition>
     </header>
 
     <!-- コンテンツ -->
@@ -113,8 +97,15 @@
   </div>
 </template>
 
+<style>
+.fade-slide-enter-active,
+.fade-slide-leave-active { transition: all .18s ease; }
+.fade-slide-enter-from,
+.fade-slide-leave-to { opacity: 0; transform: translateY(-6px); }
+</style>
+
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRoute } from './composables/useLocaleRoute'
@@ -122,11 +113,10 @@ import { useLocaleRoute } from './composables/useLocaleRoute'
 const route = useRoute()
 const router = useRouter()
 const { locale } = useI18n()
-
 const { rl } = useLocaleRoute()
+const open = ref(false)
 
 const currentKey = computed(() => {
-  // ルート名でまず判定
   switch (route.name) {
     case 'castles-top100':   return 'top100'
     case 'castles-top100c':  return 'top100c'
@@ -137,7 +127,7 @@ const currentKey = computed(() => {
     case 'tag':              return 'tags'
     case 'quiz':             return 'quiz'
   }
-  // 一覧/詳細のときはクエリでも判定（直リンク等のため）
+
   if (route.name === 'list' || route.name === 'detail') {
     const q = route.query
     if (q.type === 'cultural') return 'cultural'
@@ -147,6 +137,8 @@ const currentKey = computed(() => {
   }
   return ''
 })
+
+watch(() => route.fullPath, () => { open.value = false })
 
 function linkClass(key) {
   const base = 'px-3 py-2 rounded hover:bg-gray-50'
