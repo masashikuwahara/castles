@@ -54,19 +54,6 @@ class PlaceController extends Controller
 
     public function show(string $locale, string $slug)
     {
-        // $pt = PlaceTranslation::where('locale',$locale)->where('slug_localized',$slug)->first();
-        // $place = $pt?->place()->with([
-        //     'translations'=>fn($t)=>$t->where('locale',$locale),
-        //     'prefecture','tags','photos'
-        // ])->first();
-
-        // if (!$place) {
-        //     $place = Place::where('slug',$slug)->with([
-        //         'translations'=>fn($t)=>$t->where('locale',$locale),
-        //         'prefecture','tags','photos'
-        //     ])->firstOrFail();
-        // }
-
         $place = Place::query()
         ->with([
             'translations' => fn($t) => $t->where('locale',$locale),
