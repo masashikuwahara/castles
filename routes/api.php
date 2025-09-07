@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Api\QuizController;
 use App\Http\Controllers\Api\CulturalSiteController;
+use App\Http\Controllers\Api\Admin\PlaceAdminController;
+use App\Http\Controllers\Api\Admin\CulturalSiteAdminController;
 
 Route::pattern('locale', 'ja|en');
 Route::get('/ping', function ($locale) {
@@ -21,4 +23,17 @@ Route::prefix('{locale}')->group(function () {
     Route::get('/cultural-sites/{slug}', [CulturalSiteController::class,'show'])
     ->name('api.cultural-sites.show');
     Route::get('/cultural/tags', [TagController::class, 'cultural']);
+});
+
+Route::middleware(['auth:sanctum','can:admin'])->prefix('admin/{locale}')->group(function () {
+    // 城
+    Route::post('/places', [PlaceAdminController::class, 'store']);     // 新規
+    // 必要に応じて：update/delete も後で追加
+
+    // 文化財
+    Route::post('/culturals', [CulturalSiteAdminController::class, 'store']);
+
+    // マスタ用
+    Route::get('/tags', fn() => \App\Models\Tag::select('id','name','slug')->orderBy('name')->get());
+    Route::get('/prefectures', fn() => \App\Models\Prefecture::select('id','name_ja','name_en')->orderBy('id')->get());
 });
