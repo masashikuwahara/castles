@@ -106,16 +106,6 @@
           </div>
         </div>
       </section>
-
-      <!-- サイド：地図など -->
-      <aside>
-        <div v-if="place.lat && place.lng" class="rounded-xl overflow-hidden border">
-          <iframe
-            :src="gmapsEmbed(place.lat, place.lng)"
-            class="w-full h-64" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
-          </iframe>
-        </div>
-      </aside>
     </div>
   </div>
 
@@ -162,6 +152,16 @@
       </div>
     </div>
   </div>
+
+  <!-- サイド：地図など -->
+  <aside>
+    <div v-if="place.lat && place.lng" class="rounded-xl overflow-hidden border">
+      <iframe
+        :src="gmapsEmbed(place.lat, place.lng)"
+        class="w-full h-64" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+  </aside>
   <div class="mt-4">
     <router-link :to="rl({ name:'list' })" class="underline">一覧に戻る</router-link>
   </div>
