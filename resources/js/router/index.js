@@ -53,6 +53,16 @@ const router = createRouter({
     { name: 'tags-index', path: '/:locale(ja|en)/tags', component: () => import('../pages/TagsIndex.vue') },
     { name: 'tag', path: '/:locale(ja|en)/tags/:slug',
       redirect: to => toList(to.params.locale, { tags: to.params.slug }) },
+    
+    {
+      path: '/:locale/admin',
+      component: () => import('../admin/AdminLayout.vue'),
+      children: [
+        { path: '', name: 'admin-home', component: () => import('../admin/AdminHome.vue') },
+        { path: 'places/new', name: 'admin-place-new', component: () => import('../admin/PlaceNew.vue') },
+        { path: 'culturals/new', name: 'admin-cultural-new', component: () => import('../admin/CulturalNew.vue') },
+      ]
+    }
   ],
 })
 
