@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\TagController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\Api\QuizController;
 use App\Http\Controllers\Api\CulturalSiteController;
 use App\Http\Controllers\Api\Admin\PlaceAdminController;
 use App\Http\Controllers\Api\Admin\CulturalSiteAdminController;
+use App\Http\Controllers\Api\AuthApiController;
 
 Route::pattern('locale', 'ja|en');
 Route::get('/ping', function ($locale) {
@@ -36,4 +38,11 @@ Route::middleware(['auth:sanctum','can:admin'])->prefix('admin/{locale}')->group
     // マスタ用
     Route::get('/tags', fn() => \App\Models\Tag::select('id','name','slug')->orderBy('name')->get());
     Route::get('/prefectures', fn() => \App\Models\Prefecture::select('id','name_ja','name_en')->orderBy('id')->get());
+});
+
+Route::post('/login',  [AuthApiController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me',     [AuthApiController::class, 'me']);
+    Route::post('/logout',[AuthApiController::class, 'logout']);
+    // ★管理用の作成APIもここに置く（保護）
 });

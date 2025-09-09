@@ -1,14 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const PlaceList   = () => import('../pages/PlaceList.vue')
 const PlaceDetail = () => import('../pages/PlaceDetail.vue')
-
-const toList = (locale, query) => ({ name: 'list', params: { locale }, query })
-
 const QuizPage = () => import('../pages/QuizPage.vue')
-
 const CulturalList = () => import('../pages/CulturalList.vue')
 const CulturalDetail = () => import('../pages/CulturalDetail.vue')
+
+const AdminLayout   = () => import('../admin/AdminLayout.vue')
+const AdminHome     = () => import('../admin/AdminHome.vue')
+const AdminPlaceNew = () => import('../admin/PlaceNew.vue')
+const AdminCultNew  = () => import('../admin/CulturalNew.vue')
+const AdminLogin    = () => import('../admin/AdminLogin.vue')
+
+const toList = (locale, query) => ({ name: 'list', params: { locale }, query })
 
 const router = createRouter({
   history: createWebHistory(),
@@ -33,20 +38,11 @@ const router = createRouter({
       redirect: to => ({ name:'list', params:{ locale: to.params.locale }, query:{ type:'castle', others:1 } })
     },
 
+    //文化財
     { name: 'cultural-list', path: '/:locale(ja|en)/cultural', component: CulturalList },
-
-    // 文化財の“別ページ”詳細
     { name: 'cultural-detail', path: '/:locale(ja|en)/cultural/:slug', component: CulturalDetail },
-    
-    // ★ プレフィルタ直リンク（→ 一覧にクエリ付きでリダイレクト）
-    { path: '/:locale(ja|en)/castles/top100',
-      redirect: to => toList(to.params.locale, { type: 'castle', top100: 1 }) },
-    { path: '/:locale(ja|en)/castles/top100-continued',
-      redirect: to => toList(to.params.locale, { type: 'castle', top100c: 1 }) },
-    { path: '/:locale(ja|en)/castles/others',
-      redirect: to => toList(to.params.locale, { others: 1 }) },
-    { path: '/:locale(ja|en)/cultural-properties',
-      redirect: to => toList(to.params.locale, { type: 'cultural_property' }) },
+
+    //クイズ
     { path: '/:locale(ja|en)/quiz', name: 'quiz', component: QuizPage },
 
     // ★ タグページ
@@ -54,16 +50,24 @@ const router = createRouter({
     { name: 'tag', path: '/:locale(ja|en)/tags/:slug',
       redirect: to => toList(to.params.locale, { tags: to.params.slug }) },
     
+    //ログイン
     {
-      path: '/:locale/admin',
-      component: () => import('../admin/AdminLayout.vue'),
+      path: '/admin',
+      component: AdminLayout,
+      meta: { requiresAuth: true },
       children: [
-        { path: '', name: 'admin-home', component: () => import('../admin/AdminHome.vue') },
-        { path: 'places/new', name: 'admin-place-new', component: () => import('../admin/PlaceNew.vue') },
-        { path: 'culturals/new', name: 'admin-cultural-new', component: () => import('../admin/CulturalNew.vue') },
-      ]
-    }
+        { path: '', name: 'admin-home', component: AdminHome },
+        { path: 'places/new',    name: 'admin-place-new',    component: AdminPlaceNew },
+        { path: 'culturals/new', name: 'admin-cultural-new', component: AdminCultNew },
+      ],
+    },
+
+    { path: '/:pathMatch(.*)*', redirect: '/ja/places' }
   ],
+  scrollBehavior (to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    return { top: 0 }
+  }
 })
 
 router.beforeEach((to, from, next) => {
@@ -76,18 +80,24 @@ router.beforeEach((to, from, next) => {
       (typeof from.params.locale === 'string' && from.params.locale) ||
       (navigator.language && navigator.language.startsWith('en') ? 'en' : 'ja')
 
-    return next({
+    next({
       ...to,
       params: { ...to.params, locale: fallback },
       replace: true,
     })
+  } else {
+    next()
+  }
+})
+
+router.beforeEach(async (to, from, next) => {
+  const auth = useAuthStore()
+  // 起動時やリロード直後、me() 未実行なら1回だけ同期
+  if (!auth.bootstrapDone) { await auth.bootstrap() }
+
+  if (to.meta.requiresAuth && !auth.user) {
+    return next({ name: 'admin-login', query: { redirect: to.fullPath } })
   }
   next()
 })
-
-router.beforeEach((to, from, next) => {
-  if (!to.params.locale) return next({ ...to, params: { ...to.params, locale: 'ja' } })
-  next()
-})
-
 export default router

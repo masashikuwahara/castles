@@ -1,16 +1,22 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6 grid md:grid-cols-5 gap-6">
-    <aside class="md:col-span-1 space-y-2">
-      <router-link class="block px-3 py-2 rounded border" :to="rl({ name:'admin-home' })">管理トップ</router-link>
-      <router-link class="block px-3 py-2 rounded border" :to="rl({ name:'admin-place-new' })">城を新規作成</router-link>
-      <router-link class="block px-3 py-2 rounded border" :to="rl({ name:'admin-cultural-new' })">文化財を新規作成</router-link>
-    </aside>
-    <main class="md:col-span-4">
-      <router-view />
-    </main>
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <header class="flex justify-between items-center mb-6">
+      <h1 class="font-bold">Admin</h1>
+      <div v-if="auth.user" class="flex items-center gap-3">
+        <span class="text-sm text-gray-600">{{ auth.user.name }}</span>
+        <button class="px-3 py-1 border rounded" @click="logout">Logout</button>
+      </div>
+    </header>
+    <router-view />
   </div>
 </template>
 <script setup>
-import { useLocaleRoute } from '../composables/useLocaleRoute'
-const { rl } = useLocaleRoute()
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+const auth = useAuthStore()
+const router = useRouter()
+async function logout() {
+  await auth.logout()
+  router.replace({ name: 'admin-login' })
+}
 </script>
