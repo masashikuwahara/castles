@@ -1,140 +1,123 @@
 <template>
-  <div class="max-w-3xl mx-auto space-y-6">
-    <h2 class="text-xl font-bold">城ページの新規作成</h2>
+  <div class="p-6 max-w-3xl">
+    <h2 class="text-xl font-bold mb-4">城を新規作成</h2>
 
-    <section class="clay p-4 space-y-3">
-      <div class="grid sm:grid-cols-2 gap-3">
+    <form @submit.prevent="submit">
+      <div class="grid gap-3">
         <label class="block">
-          <div class="text-sm text-gray-600">スラッグ</div>
-          <input v-model="fields.slug" class="w-full border rounded px-3 py-2" placeholder="matsumoto">
+          <div class="text-sm text-gray-600">Slug（英小文字・-）</div>
+          <input v-model="f.slug" class="border rounded px-3 py-2 w-full" required />
         </label>
 
         <label class="block">
-          <div class="text-sm text-gray-600">都道府県</div>
-          <select v-model="fields.prefecture_id" class="w-full border rounded px-3 py-2">
-            <option v-for="p in masters.prefectures" :key="p.id" :value="p.id">{{ p.name_ja }}</option>
-          </select>
+          <div class="text-sm text-gray-600">都道府県ID</div>
+          <input v-model.number="f.prefecture_id" type="number" class="border rounded px-3 py-2 w-full" required />
         </label>
 
         <label class="block">
           <div class="text-sm text-gray-600">市区町村</div>
-          <input v-model="fields.city" class="w-full border rounded px-3 py-2">
+          <input v-model="f.city" class="border rounded px-3 py-2 w-full" />
         </label>
 
-        <label class="block">
-          <div class="text-sm text-gray-600">緯度 / 経度</div>
-          <div class="flex gap-2">
-            <input v-model.number="fields.lat" type="number" step="0.0000001" class="w-full border rounded px-3 py-2">
-            <input v-model.number="fields.lng" type="number" step="0.0000001" class="w-full border rounded px-3 py-2">
-          </div>
-        </label>
-      </div>
-
-      <div class="grid sm:grid-cols-2 gap-3">
         <label class="block">
           <div class="text-sm text-gray-600">名称（日本語）</div>
-          <input v-model="t.ja.name" class="w-full border rounded px-3 py-2">
+          <input v-model="f.name_ja" class="border rounded px-3 py-2 w-full" required />
         </label>
+
         <label class="block">
-          <div class="text-sm text-gray-600">名称（英語）</div>
-          <input v-model="t.en.name" class="w-full border rounded px-3 py-2">
+          <div class="text-sm text-gray-600">概要（日本語）</div>
+          <textarea v-model="f.summary_ja" class="border rounded px-3 py-2 w-full" rows="3" />
         </label>
-      </div>
 
-      <label class="block">
-        <div class="text-sm text-gray-600">概要（日本語）</div>
-        <textarea v-model="t.ja.summary" rows="3" class="w-full border rounded px-3 py-2"></textarea>
-      </label>
-      <label class="block">
-        <div class="text-sm text-gray-600">Summary（English）</div>
-        <textarea v-model="t.en.summary" rows="3" class="w-full border rounded px-3 py-2"></textarea>
-      </label>
+        <details class="mt-2">
+          <summary class="cursor-pointer text-sm text-gray-600">英語（任意）</summary>
+          <div class="mt-2 grid gap-3">
+            <label class="block">
+              <div class="text-sm text-gray-600">Name (EN)</div>
+              <input v-model="f.name_en" class="border rounded px-3 py-2 w-full" />
+            </label>
+            <label class="block">
+              <div class="text-sm text-gray-600">Summary (EN)</div>
+              <textarea v-model="f.summary_en" class="border rounded px-3 py-2 w-full" rows="3" />
+            </label>
+          </div>
+        </details>
 
-      <div>
-        <div class="text-sm text-gray-600 mb-1">タグ</div>
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="tg in masters.tags" :key="tg.slug"
-            :class="['clay-btn', selected.has(tg.slug) && 'clay-btn--active']"
-            @click.prevent="toggleTag(tg.slug)"
-          >#{{ tg.name }}</button>
+        <div class="pt-2 flex gap-2">
+          <button class="px-4 py-2 rounded border" :disabled="loading">保存</button>
+          <div v-if="error" class="text-red-600 text-sm">{{ error }}</div>
+          <div v-if="done" class="text-green-700 text-sm">保存しました</div>
         </div>
       </div>
-    </section>
+    </form>
 
-    <section class="clay p-4 space-y-3">
-      <div class="text-sm font-semibold">画像（複数可）</div>
-      <input type="file" multiple @change="onFiles">
-      <div v-if="files.length" class="mt-2 space-y-2">
-        <div v-for="(f,i) in files" :key="i" class="flex items-center gap-2">
-          <input type="radio" name="cover" :value="i" v-model="coverIndex">
-          <div class="text-sm w-48 truncate">{{ f.name }}</div>
-          <input class="border rounded px-2 py-1 text-sm flex-1" placeholder="キャプション（ja）" v-model="captions_ja[i]">
-          <input class="border rounded px-2 py-1 text-sm flex-1" placeholder="Caption (en)" v-model="captions_en[i]">
-        </div>
-        <p class="text-xs text-gray-500">チェックを付けた画像がカバーになります。</p>
-      </div>
-    </section>
+    <hr class="my-6"/>
 
-    <div class="flex gap-3">
-      <button class="clay-btn clay-pressable" @click="submit" :disabled="submitting">保存</button>
-      <div v-if="error" class="text-red-600 text-sm">{{ error }}</div>
-      <div v-if="done"  class="text-green-700 text-sm">保存しました</div>
-    </div>
+    <!-- 画像アップロード（任意） -->
+    <form @submit.prevent="upload" class="grid gap-2">
+      <div class="font-semibold">画像を追加（任意）</div>
+      <input type="file" @change="onFile" accept="image/*" />
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" v-model="is_cover" /> カバー画像にする
+      </label>
+      <input v-model="cap_ja" placeholder="キャプション（JA）" class="border rounded px-3 py-2" />
+      <input v-model="cap_en" placeholder="Caption (EN)" class="border rounded px-3 py-2" />
+      <button class="px-3 py-2 border rounded" :disabled="!createdId || !file || uploading">アップロード</button>
+    </form>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getAdminMaster, createPlace } from '../lib/api-admin'
-import { useLocaleRoute } from '../composables/useLocaleRoute'
+import { ref } from 'vue'
+import { api } from '../lib/api'
 
-const route = useRoute()
-const router = useRouter()
-const { rl, loc } = useLocaleRoute()
-
-const masters = reactive({ prefectures: [], tags: [] })
-const fields = reactive({ slug:'', prefecture_id:null, city:'', lat:null, lng:null })
-const t = reactive({ ja:{name:'', summary:'', slug_localized:''}, en:{name:'', summary:'', slug_localized:''} })
-const selected = reactive(new Set())
-const files = ref([])
-const captions_ja = ref([])
-const captions_en = ref([])
-const coverIndex = ref(0)
-
-const submitting = ref(false)
+const f = ref({
+  slug: '', prefecture_id: null, city: '',
+  name_ja: '', summary_ja: '',
+  name_en: '', summary_en: '',
+})
+const loading = ref(false)
 const error = ref('')
 const done = ref(false)
+const createdId = ref(null)
 
-function toggleTag(slug) { selected.has(slug) ? selected.delete(slug) : selected.add(slug) }
-function onFiles(e){ files.value = Array.from(e.target.files || []) }
-
-async function submit(){
-  submitting.value = true; error.value=''; done.value=false
+async function submit() {
+  loading.value = true; error.value = ''; done.value = false
   try {
-    await createPlace(loc.value, {
-      fields,
-      t,
-      tags: Array.from(selected),
-      photos: files.value,
-      captions_ja: captions_ja.value,
-      captions_en: captions_en.value,
-      cover_index: coverIndex.value
-    })
+    const { data } = await api.post('/admin/places', f.value)
+    createdId.value = data.data?.id ?? data.id ?? null
     done.value = true
-    // 作成後、詳細へ飛ぶ/一覧へ戻る等
-    // router.push(rl({ name:'list' }))
   } catch (e) {
-    error.value = e?.response?.data?.message || e.message
+    error.value = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message
   } finally {
-    submitting.value = false
+    loading.value = false
   }
 }
 
-onMounted(async ()=>{
-  const m = await getAdminMaster(loc.value)
-  masters.prefectures = m.prefectures
-  masters.tags = m.tags
-})
+// 画像アップロード
+const file = ref(null)
+const cap_ja = ref(''); const cap_en = ref('')
+const is_cover = ref(false); const uploading = ref(false)
+function onFile(e){ file.value = e.target.files?.[0] || null }
+
+async function upload() {
+  if (!createdId.value || !file.value) return
+  uploading.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file.value)
+    fd.append('caption_ja', cap_ja.value || '')
+    fd.append('caption_en', cap_en.value || '')
+    fd.append('is_cover', is_cover.value ? '1' : '0')
+    await api.post(`/admin/places/${createdId.value}/photos`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    file.value = null; cap_ja.value = ''; cap_en.value = ''; is_cover.value = false
+    alert('アップロードしました')
+  } catch (e) {
+    alert(e?.response?.data?.message || e.message)
+  } finally {
+    uploading.value = false
+  }
+}
 </script>

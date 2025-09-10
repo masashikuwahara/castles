@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\CulturalSiteController;
 use App\Http\Controllers\Api\Admin\PlaceAdminController;
 use App\Http\Controllers\Api\Admin\CulturalSiteAdminController;
 use App\Http\Controllers\Api\AuthApiController;
+use App\Http\Controllers\Api\AdminPlaceController;
+use App\Http\Controllers\Api\AdminCulturalController;
 
 Route::pattern('locale', 'ja|en');
 Route::get('/ping', function ($locale) {
@@ -44,5 +46,8 @@ Route::post('/login',  [AuthApiController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me',     [AuthApiController::class, 'me']);
     Route::post('/logout',[AuthApiController::class, 'logout']);
-    // ★管理用の作成APIもここに置く（保護）
+    Route::post('/admin/places',   [AdminPlaceController::class, 'store']);
+    Route::post('/admin/culturals',[AdminCulturalController::class, 'store']);
+    Route::post('/admin/places/{place}/photos',   [AdminPlaceController::class, 'addPhoto']);
+    Route::post('/admin/culturals/{site}/photos', [AdminCulturalController::class, 'addPhoto']);
 });

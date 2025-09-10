@@ -56,13 +56,12 @@ const router = createRouter({
       component: AdminLayout,
       meta: { requiresAuth: true },
       children: [
-        { path: '', name: 'admin-home', component: AdminHome },
-        { path: 'places/new',    name: 'admin-place-new',    component: AdminPlaceNew },
-        { path: 'culturals/new', name: 'admin-cultural-new', component: AdminCultNew },
+        { path: '', name: 'admin-home', component: () => import('../admin/AdminHome.vue') },
+        { path: 'places/new', name: 'admin-place-new', component: () => import('../admin/PlaceNew.vue') },
+        { path: 'culturals/new', name: 'admin-cultural-new', component: () => import('../admin/CulturalNew.vue') },
       ],
     },
-
-    { path: '/:pathMatch(.*)*', redirect: '/ja/places' }
+    { path: '/admin/login', name: 'admin-login', component: () => import('../admin/AdminLogin.vue') },
   ],
   scrollBehavior (to, from, savedPosition) {
     if (savedPosition) return savedPosition
@@ -92,7 +91,6 @@ router.beforeEach((to, from, next) => {
 
 router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore()
-  // 起動時やリロード直後、me() 未実行なら1回だけ同期
   if (!auth.bootstrapDone) { await auth.bootstrap() }
 
   if (to.meta.requiresAuth && !auth.user) {
