@@ -19,7 +19,10 @@ class Place extends Model implements HasMedia
 
     protected $casts = [
         'meta' => 'array',
+        'is_top100' => 'boolean',
+        'is_top100_continued' => 'boolean',
     ];
+    
 
     public function translations()
     {
