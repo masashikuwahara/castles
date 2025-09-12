@@ -39,18 +39,18 @@ class AdminPlaceController extends Controller
             't_ja.name' => 'required|string',
             't_ja.slug_localized' => 'nullable|string',
             't_ja.summary' => 'nullable|string',
-            't_ja.castle_structure_text' => 'nullable|string',
-            't_ja.tenshu_structure_text' => 'nullable|string',
-            't_ja.designated_heritage_text' => 'nullable|string',
-            't_ja.remains_text' => 'nullable|string',
+            // 't_ja.castle_structure_text' => 'nullable|string',
+            // 't_ja.tenshu_structure_text' => 'nullable|string',
+            // 't_ja.designated_heritage_text' => 'nullable|string',
+            // 't_ja.remains_text' => 'nullable|string',
 
             't_en.name' => 'nullable|string',
             't_en.slug_localized' => 'nullable|string',
             't_en.summary' => 'nullable|string',
-            't_en.castle_structure_text' => 'nullable|string',
-            't_en.tenshu_structure_text' => 'nullable|string',
-            't_en.designated_heritage_text' => 'nullable|string',
-            't_en.remains_text' => 'nullable|string',
+            // 't_en.castle_structure_text' => 'nullable|string',
+            // 't_en.tenshu_structure_text' => 'nullable|string',
+            // 't_en.designated_heritage_text' => 'nullable|string',
+            // 't_en.remains_text' => 'nullable|string',
 
             // タグ（slugの配列）
             'tags'   => ['array'],
@@ -88,10 +88,10 @@ class AdminPlaceController extends Controller
             'name'     => $ja['name'],
             'slug_localized' => $ja['slug_localized'] ?: $place->slug,
             'summary'  => $ja['summary'] ?? null,
-            'castle_structure_text' => $ja['castle_structure_text'] ?? null,
-            'tenshu_structure_text' => $ja['tenshu_structure_text'] ?? null,
-            'designated_heritage_text' => $ja['designated_heritage_text'] ?? null,
-            'remains_text' => $ja['remains_text'] ?? null,
+            // 'castle_structure_text' => $ja['castle_structure_text'] ?? null,
+            // 'tenshu_structure_text' => $ja['tenshu_structure_text'] ?? null,
+            // 'designated_heritage_text' => $ja['designated_heritage_text'] ?? null,
+            // 'remains_text' => $ja['remains_text'] ?? null,
         ]);
 
         // 翻訳：en（任意）
@@ -103,10 +103,10 @@ class AdminPlaceController extends Controller
                 'name'     => $en['name'],
                 'slug_localized' => $en['slug_localized'] ?: ($place->slug.'-castle'),
                 'summary'  => $en['summary'] ?? null,
-                'castle_structure_text' => $en['castle_structure_text'] ?? null,
-                'tenshu_structure_text' => $en['tenshu_structure_text'] ?? null,
-                'designated_heritage_text' => $en['designated_heritage_text'] ?? null,
-                'remains_text' => $en['remains_text'] ?? null,
+                // 'castle_structure_text' => $en['castle_structure_text'] ?? null,
+                // 'tenshu_structure_text' => $en['tenshu_structure_text'] ?? null,
+                // 'designated_heritage_text' => $en['designated_heritage_text'] ?? null,
+                // 'remains_text' => $en['remains_text'] ?? null,
             ]);
         }
 

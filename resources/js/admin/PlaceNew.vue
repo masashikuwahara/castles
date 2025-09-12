@@ -17,7 +17,7 @@
 
         <label class="block">
           <div class="text-sm text-gray-600">Slug（英小文字・-）</div>
-          <input v-model="f.slug" class="border rounded px-3 py-2 w-full" required />
+          <input v-model="f.slug" class="border rounded px-3 py-2 w-full" placeholder="himeji" required />
         </label>
 
         <label class="block">
@@ -44,7 +44,7 @@
         <div class="grid grid-cols-2 gap-3">
           <label class="block">
             <div class="text-sm text-gray-600">成立年（built_year）</div>
-            <input v-model.number="f.built_year" type="number" class="border rounded px-3 py-2 w-full" />
+            <input v-model.number="f.built_year" type="text" class="border rounded px-3 py-2 w-full" />
           </label>
           <label class="block">
             <div class="text-sm text-gray-600">廃城年（abolished_year）</div>
@@ -126,7 +126,7 @@
           <textarea v-model="t_ja.summary" class="border rounded px-3 py-2 w-full" rows="3" />
         </label>
 
-        <details>
+        <!-- <details>
           <summary class="cursor-pointer text-sm text-gray-600">詳細テキスト（日本語/任意）</summary>
           <div class="grid gap-3 mt-2">
             <textarea v-model="t_ja.castle_structure_text" class="border rounded px-3 py-2 w-full" rows="2" placeholder="城郭構造の解説" />
@@ -134,7 +134,7 @@
             <textarea v-model="t_ja.designated_heritage_text" class="border rounded px-3 py-2 w-full" rows="2" placeholder="文化財指定の解説" />
             <textarea v-model="t_ja.remains_text" class="border rounded px-3 py-2 w-full" rows="2" placeholder="遺構の解説" />
           </div>
-        </details>
+        </details> -->
       </section>
 
       <!-- 翻訳（英語） -->
@@ -156,7 +156,7 @@
           <textarea v-model="t_en.summary" class="border rounded px-3 py-2 w-full" rows="3" />
         </label>
 
-        <details>
+        <!-- <details>
           <summary class="cursor-pointer text-sm text-gray-600">Detail texts (EN / optional)</summary>
           <div class="grid gap-3 mt-2">
             <textarea v-model="t_en.castle_structure_text" class="border rounded px-3 py-2 w-full" rows="2" />
@@ -164,7 +164,7 @@
             <textarea v-model="t_en.designated_heritage_text" class="border rounded px-3 py-2 w-full" rows="2" />
             <textarea v-model="t_en.remains_text" class="border rounded px-3 py-2 w-full" rows="2" />
           </div>
-        </details>
+        </details> -->
       </section>
 
       <!-- Meta(JSON) -->
