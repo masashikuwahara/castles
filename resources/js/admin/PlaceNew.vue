@@ -17,7 +17,7 @@
 
         <label class="block">
           <div class="text-sm text-gray-600">Slug（英小文字・-）</div>
-          <input v-model="f.slug" class="border rounded px-3 py-2 w-full" placeholder="himeji" required />
+          <input v-model="f.slug" class="border rounded px-3 py-2 w-full" placeholder="himeji,matsumoto" required />
         </label>
 
         <label class="block">
@@ -125,16 +125,6 @@
           <div class="text-sm text-gray-600">概要（日本語）</div>
           <textarea v-model="t_ja.summary" class="border rounded px-3 py-2 w-full" rows="3" />
         </label>
-
-        <!-- <details>
-          <summary class="cursor-pointer text-sm text-gray-600">詳細テキスト（日本語/任意）</summary>
-          <div class="grid gap-3 mt-2">
-            <textarea v-model="t_ja.castle_structure_text" class="border rounded px-3 py-2 w-full" rows="2" placeholder="城郭構造の解説" />
-            <textarea v-model="t_ja.tenshu_structure_text" class="border rounded px-3 py-2 w-full" rows="2" placeholder="天守構造の解説" />
-            <textarea v-model="t_ja.designated_heritage_text" class="border rounded px-3 py-2 w-full" rows="2" placeholder="文化財指定の解説" />
-            <textarea v-model="t_ja.remains_text" class="border rounded px-3 py-2 w-full" rows="2" placeholder="遺構の解説" />
-          </div>
-        </details> -->
       </section>
 
       <!-- 翻訳（英語） -->
@@ -155,16 +145,6 @@
           <div class="text-sm text-gray-600">Summary (EN)</div>
           <textarea v-model="t_en.summary" class="border rounded px-3 py-2 w-full" rows="3" />
         </label>
-
-        <!-- <details>
-          <summary class="cursor-pointer text-sm text-gray-600">Detail texts (EN / optional)</summary>
-          <div class="grid gap-3 mt-2">
-            <textarea v-model="t_en.castle_structure_text" class="border rounded px-3 py-2 w-full" rows="2" />
-            <textarea v-model="t_en.tenshu_structure_text" class="border rounded px-3 py-2 w-full" rows="2" />
-            <textarea v-model="t_en.designated_heritage_text" class="border rounded px-3 py-2 w-full" rows="2" />
-            <textarea v-model="t_en.remains_text" class="border rounded px-3 py-2 w-full" rows="2" />
-          </div>
-        </details> -->
       </section>
 
       <!-- Meta(JSON) -->
