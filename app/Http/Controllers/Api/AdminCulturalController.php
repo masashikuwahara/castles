@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PlaceResource;
-use App\Models\Place;
-use App\Models\PlaceTranslation;
+use App\Http\Resources\CulturalSiteResource;
+use App\Models\CulturalSite;
+use App\Models\CulturalSiteTranslation;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 
 class AdminCulturalController extends Controller
@@ -13,57 +14,108 @@ class AdminCulturalController extends Controller
     public function store(Request $req)
     {
         $v = $req->validate([
-          'slug' => 'required|alpha_dash|unique:places,slug',
-          'prefecture_id' => 'required|exists:prefectures,id',
-          'city' => 'nullable|string',
-          'type' => 'in:castle|cultural', // 運用は castle 前提
-          'name_ja' => 'required|string',
-          'summary_ja' => 'nullable|string',
-          'name_en' => 'nullable|string',
-          'summary_en' => 'nullable|string',
+            'slug' => 'required|alpha_dash|unique:cultural_sites,slug',
+            'prefecture_id' => 'required|exists:prefectures,id',
+            'city' => 'nullable|string',
+            'lat'  => 'nullable|numeric',
+            'lng'  => 'nullable|numeric',
+
+            'designated_heritage' => 'nullable|string',
+            'site_type' => 'nullable|string',
+            'period'    => 'nullable|string',
+            'rating'    => 'nullable|integer|min:0|max:5',
+
+            'managing_agency' => 'nullable|string',
+            'official_url'    => 'nullable|string',
+            'meta'            => 'nullable|array',
+
+            // 翻訳
+            't_ja.name'           => 'required|string',
+            't_ja.slug_localized' => 'nullable|string',
+            't_ja.summary'        => 'nullable|string',
+
+            't_en.name'           => 'nullable|string',
+            't_en.slug_localized' => 'nullable|string',
+            't_en.summary'        => 'nullable|string',
+
+            // タグ
+            'tags'   => 'array',
+            'tags.*' => 'string|distinct',
         ]);
 
-        $place = Place::create([
-          'type' => $req->input('type','castle'),
-          'slug' => $v['slug'],
-          'prefecture_id' => $v['prefecture_id'],
-          'city' => $v['city'] ?? null,
+        // 作成
+        $site = CulturalSite::create([
+            'prefecture_id' => $v['prefecture_id'],
+            'slug' => $v['slug'],
+            'city' => $v['city'] ?? null,
+            'lat'  => $v['lat'] ?? null,
+            'lng'  => $v['lng'] ?? null,
+
+            'designated_heritage' => $v['designated_heritage'] ?? null,
+            'site_type' => $v['site_type'] ?? null,
+            'period'    => $v['period'] ?? null,
+            'rating'    => $v['rating'] ?? 0,
+
+            'managing_agency' => $v['managing_agency'] ?? null,
+            'official_url'    => $v['official_url'] ?? null,
+            'meta'            => $v['meta'] ?? null,
         ]);
 
-        // 翻訳
-        PlaceTranslation::create([
-          'place_id' => $place->id,'locale'=>'ja',
-          'name'=>$v['name_ja'],'summary'=>$v['summary_ja'] ?? null,
-          'slug_localized'=>$v['slug'], // ja は同じ slug でOK
+        // 翻訳 JA
+        $ja = $v['t_ja'];
+        CulturalSiteTranslation::create([
+            'cultural_site_id' => $site->id,
+            'locale' => 'ja',
+            'name'   => $ja['name'],
+            'slug_localized' => $ja['slug_localized'] ?: $site->slug,
+            'summary' => $ja['summary'] ?? null,
         ]);
-        if ($req->filled('name_en')) {
-          PlaceTranslation::create([
-            'place_id'=>$place->id,'locale'=>'en',
-            'name'=>$v['name_en'],'summary'=>$v['summary_en'] ?? null,
-            'slug_localized'=>$place->slug.'-en',
-          ]);
+
+        // 翻訳 EN（任意）
+        if (!empty($v['t_en']['name'])) {
+            $en = $v['t_en'];
+            CulturalSiteTranslation::create([
+                'cultural_site_id' => $site->id,
+                'locale' => 'en',
+                'name'   => $en['name'],
+                'slug_localized' => $en['slug_localized'] ?: $site->slug,
+                'summary' => $en['summary'] ?? null,
+            ]);
         }
 
-        return (new PlaceResource($place->load(['translations','prefecture','tags','media'])))->response();
+        // タグ同期（slugベース・なければ作成）
+        $slugs = collect($v['tags'] ?? [])->filter()->unique();
+        if ($slugs->isNotEmpty()) {
+            $found = Tag::whereIn('slug', $slugs)->get()->keyBy('slug');
+            $missing = $slugs->diff($found->keys());
+            foreach ($missing as $slug) {
+                $found[$slug] = Tag::create(['slug' => $slug, 'name' => $slug]);
+            }
+            $site->tags()->sync($found->pluck('id'));
+        }
+
+        return (new CulturalSiteResource(
+            $site->load(['translations','prefecture','tags','media' => fn($m)=>$m->where('collection_name','photos')])
+        ))->response();
     }
 
-    public function addPhoto(Request $req, Place $place)
+    public function addPhoto(Request $req, CulturalSite $cultural)
     {
         $v = $req->validate([
-          'file' => 'required|image',
-          'caption_ja' => 'nullable|string',
-          'caption_en' => 'nullable|string',
-          'is_cover'   => 'nullable|boolean',
+            'file' => 'required|image',
+            'caption_ja' => 'nullable|string',
+            'caption_en' => 'nullable|string',
+            'is_cover'   => 'nullable|boolean',
         ]);
 
-        $media = $place->addMediaFromRequest('file')
-          ->usingFileName(time().'_'.$req->file('file')->getClientOriginalName())
-          ->withCustomProperties([
-            'caption_ja' => $v['caption_ja'] ?? null,
-            'caption_en' => $v['caption_en'] ?? null,
-            'is_cover'   => (bool)($v['is_cover'] ?? false),
-          ])->toMediaCollection('photos');
+        $media = $cultural->addMediaFromRequest('file')
+            ->usingFileName(time().'_'.$req->file('file')->getClientOriginalName())
+            ->withCustomProperties([
+                'caption_ja' => $v['caption_ja'] ?? null,
+                'caption_en' => $v['caption_en'] ?? null,
+                'is_cover'   => (bool)($v['is_cover'] ?? false),
+            ])->toMediaCollection('photos');
 
-        return response()->json(['id'=>$media->id], 201);
+        return response()->json(['id' => $media->id], 201);
     }
 }
