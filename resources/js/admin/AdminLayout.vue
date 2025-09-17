@@ -3,7 +3,7 @@
     <header class="flex justify-between items-center mb-6">
       <h1 class="font-bold">Admin</h1>
       <div v-if="auth.user" class="flex items-center gap-3">
-        <span class="text-sm text-gray-600">{{ auth.user.name }}</span>
+        <span class="text-sm text-gray-600">{{ auth.user.name }}さんログイン中</span>
         <button class="px-3 py-1 border rounded" @click="logout">Logout</button>
       </div>
     </header>
