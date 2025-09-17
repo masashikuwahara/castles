@@ -155,7 +155,7 @@
 
   <!-- サイド：地図など -->
   <aside>
-    <div v-if="place.lat && place.lng" class="rounded-xl overflow-hidden border">
+    <div v-if="place && place.lat && place.lng" class="rounded-xl overflow-hidden border mt-3">
       <iframe
         :src="gmapsEmbed(place.lat, place.lng)"
         class="w-full h-64" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
