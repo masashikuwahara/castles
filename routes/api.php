@@ -13,7 +13,7 @@ use App\Http\Controllers\Api\AdminPlaceController;
 use App\Http\Controllers\Api\AdminCulturalController;
 
 Route::pattern('locale', 'ja|en');
-Route::get('/ping', function ($locale) {
+Route::get('/{locale}/ping', function ($locale) {
     return response()->json(['ok' => true, 'locale' => $locale]);
 });
 
@@ -30,24 +30,19 @@ Route::prefix('{locale}')->group(function () {
 });
 
 Route::middleware(['auth:sanctum','can:admin'])->prefix('admin/{locale}')->group(function () {
-    // 城
-    Route::post('/places', [PlaceAdminController::class, 'store']);     // 新規
-    // 必要に応じて：update/delete も後で追加
-
-    // 文化財
+    Route::post('/places', [PlaceAdminController::class, 'store']);
     Route::post('/culturals', [CulturalSiteAdminController::class, 'store']);
-
-    // マスタ用
     Route::get('/tags', fn() => \App\Models\Tag::select('id','name','slug')->orderBy('name')->get());
     Route::get('/prefectures', fn() => \App\Models\Prefecture::select('id','name_ja','name_en')->orderBy('id')->get());
 });
 
+// ログイン
 Route::post('/login',  [AuthApiController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me',     [AuthApiController::class, 'me']);
     Route::post('/logout',[AuthApiController::class, 'logout']);
     Route::post('/admin/places',   [AdminPlaceController::class, 'store']);
-    Route::post('/admin/culturals',[AdminCulturalController::class, 'store']);
     Route::post('/admin/places/{place}/photos',   [AdminPlaceController::class, 'addPhoto']);
-    Route::post('/admin/culturals/{site}/photos', [AdminCulturalController::class, 'addPhoto']);
+    Route::post('/admin/culturals',[AdminCulturalController::class, 'store']);
+    Route::post('/admin/culturals/{cultural}/photos', [AdminCulturalController::class, 'addPhoto']);
 });
