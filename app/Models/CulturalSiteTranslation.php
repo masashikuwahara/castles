@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CulturalSiteTranslation extends Model
 {
-    protected $fillable = ['locale','name','summary','slug_localized'];
+    protected $fillable = ['cultural_site_id','locale','name','summary','slug_localized'];
 
     public function site(): BelongsTo
     {
