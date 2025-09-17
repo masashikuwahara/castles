@@ -10,8 +10,7 @@
       <span>Q {{ currentNo }} / {{ qstore.total }}</span>
       <span>正解: {{ qstore.correct }}</span>
       <span>不正解: {{ qstore.wrong }}</span>
-      <button class="px-2 py-1 border rounded" @click="restart(qstore.total)">リセット</button>
-      <!-- 10問へのショートカット（任意） -->
+      <!-- <button class="px-2 py-1 border rounded" @click="restart(qstore.total)">リセット</button> -->
       <!-- <button class="px-2 py-1 border rounded" @click="restart(10)">10問にする</button> -->
     </div>
     
@@ -24,8 +23,8 @@
       <p class="mb-2">全 {{ qstore.total }} 問中 {{ qstore.correct }} 正解</p>
       <p class="mb-4">正解率：{{ Math.round((qstore.correct / qstore.total) * 100) }}%</p>
       <div class="flex gap-2">
-        <button class="px-3 py-2 border rounded" @click="restart(qstore.total)">同じ問数でもう一度</button>
-        <button class="px-3 py-2 border rounded" @click="restart(10)">10問で挑戦</button>
+        <button class="px-3 py-2 border rounded" @click="restart(qstore.total)">もう一度やってみる</button>
+        <!-- <button class="px-3 py-2 border rounded" @click="restart(10)">10問で挑戦</button> -->
         <router-link class="px-3 py-2 border rounded inline-block"
           :to="rl({ name:'list' })">一覧へ戻る</router-link>
       </div>
@@ -93,10 +92,11 @@
             <router-link
               v-if="explain.slug"
               class="underline"
-              :to="rl({ name:'detail' })"
-              >
+              :to="rl({ name:'detail', params: { slug: explain.slug } })"
+            >
               {{ explain.name }}
             </router-link>
+            <span v-else>{{ explain.name }}</span>
           </div>
           <p v-if="explain.summary" class="text-sm mt-2 text-gray-700">{{ explain.summary }}</p>
           <button class="mt-3 px-3 py-2 rounded border" @click="goNext">次の問題へ</button>
@@ -122,6 +122,13 @@ const targetCount = computed(() => {
   const n = Number(route.query.count || 5)
   return Number.isFinite(n) && n > 0 ? Math.min(n, 50) : 5 // 安全のため上限50
 })
+
+function rl(target) {
+  return {
+    ...target,
+    params: { ...(target.params || {}), locale: loc.value }
+  }
+}
 
 const loading = ref(true)
 const error = ref('')
