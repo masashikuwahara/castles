@@ -22,6 +22,9 @@ export const getCulturalSite = (locale, slug) =>
 export const listCulturalTags = (locale) =>
   axios.get(`/api/${locale}/cultural/tags`);
 
+export const listPrefectures = (locale) =>
+  api.get(`/${locale}/prefectures`)
+
 export function setAuthToken(token) {
   if (token) {
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;

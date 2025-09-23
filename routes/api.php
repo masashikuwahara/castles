@@ -27,6 +27,10 @@ Route::prefix('{locale}')->group(function () {
     Route::get('/cultural-sites/{slug}', [CulturalSiteController::class,'show'])
     ->name('api.cultural-sites.show');
     Route::get('/cultural/tags', [TagController::class, 'cultural']);
+        Route::get('/prefectures', function () {
+        return \App\Models\Prefecture::select('id','name_ja','name_en','code')
+            ->orderBy('id')->get();
+    })->name('api.prefectures.index');
 });
 
 Route::middleware(['auth:sanctum','can:admin'])->prefix('admin/{locale}')->group(function () {

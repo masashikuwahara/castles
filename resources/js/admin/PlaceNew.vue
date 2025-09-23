@@ -20,9 +20,27 @@
           <input v-model="f.slug" class="border rounded px-3 py-2 w-full" placeholder="himeji,matsumoto" required />
         </label>
 
-        <label class="block">
+        <!-- <label class="block">
           <div class="text-sm text-gray-600">都道府県ID</div>
           <input v-model.number="f.prefecture_id" type="number" class="border rounded px-3 py-2 w-full" required />
+        </label> -->
+
+        <label class="block">
+          <div class="text-sm text-gray-600">都道府県</div>
+          <select
+            v-model.number="f.prefecture_id"
+            class="border rounded px-3 py-2 w-full"
+            required
+          >
+            <option disabled value="">選択してください</option>
+            <option
+              v-for="p in prefectures"
+              :key="p.id"
+              :value="p.id"
+            >
+              {{ p.name_ja }} ({{ p.name_en }}) - {{ p.code }}
+            </option>
+          </select>
         </label>
 
         <label class="block">
@@ -194,11 +212,18 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { api, listTags } from '../lib/api'
+import { api, listTags, listPrefectures } from '../lib/api'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { computed } from 'vue'
 
+const route = useRoute()
+const { locale } = useI18n()
+const loc = computed(()=> route.params.locale || locale.value || 'ja')
 const createdId = ref(null)
 const allTags = ref([])
 const selectedTags = ref([])
+const prefectures = ref([])
 
 const f = ref({
   type: 'castle',
@@ -280,9 +305,20 @@ async function submit() {
   }
 }
 
+// onMounted(async () => {
+//   const { data } = await listTags('ja')
+//   allTags.value = data?.data || data
+// })
+
 onMounted(async () => {
-  const { data } = await listTags('ja') // もしくは現在の言語
-  allTags.value = data?.data || data // 返却形状に合わせて
+  const [{ data: tRes }, { data: pRes }] = await Promise.all([
+    // listTags('ja'),
+    // listPrefectures('ja'),
+    listTags(loc.value),
+    listPrefectures(loc.value),
+  ])
+  allTags.value = tRes?.data || tRes
+  prefectures.value = pRes?.data || pRes
 })
 
 function toggleTag(slug){
