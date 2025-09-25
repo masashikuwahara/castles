@@ -56,6 +56,25 @@ class CulturalSiteController extends Controller
                 $q->whereHas('tags', fn($t)=>$t->where('slug', $slug));
             }
         }
+        
+        $sort = $req->query('sort', 'recommended'); // 'recommended' | 'name' | 'new'
+        switch ($sort) {
+            case 'name':
+                $q->leftJoin('cultural_site_translations as tr', function($j) use ($locale){
+                    $j->on('tr.cultural_site_id', '=', 'cultural_sites.id')
+                    ->where('tr.locale', $locale);
+                })
+                ->select('cultural_sites.*')
+                ->orderBy('tr.name');
+                break;
+            case 'new':
+                $q->orderByDesc('cultural_sites.created_at')->orderByDesc('cultural_sites.id');
+                break;
+            case 'recommended':
+            default:
+                $q->orderByRaw('rating IS NULL')->orderByDesc('rating')->orderBy('cultural_sites.id');
+                break;
+        }
 
         return CulturalSiteResource::collection(
             $q->paginate(24)->appends($req->query())

@@ -8,7 +8,7 @@
     </div>
 
     <!-- フィルタバー -->
-    <FilterBar />
+    <FilterBar :sort="route.query.sort || 'recommended'" @change-sort="onSort" />
 
     <!-- 一覧 -->
     <div v-if="store.loading">Loading...</div>
@@ -58,6 +58,11 @@ const safeItems = computed(() => {
 })
 
 const safeKey = (p) => p.id ?? `${p.type || 'place'}:${p.slug || p.slug_localized}`
+
+function onSort(v) {
+  const params = { ...route.query, sort: v, page: undefined }
+  router.replace({ query: params })
+}
 
 function reload() {
   const params = { ...route.query, q: q.value || undefined, page: undefined }

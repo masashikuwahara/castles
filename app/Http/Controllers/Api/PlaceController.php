@@ -43,6 +43,29 @@ class PlaceController extends Controller
         }
     }
 
+    $sort = $req->query('sort', 'recommended'); // 'recommended' | 'name' | 'new'
+    switch ($sort) {
+        case 'name':
+            // ロケール別の名称で並び替え
+            $q->leftJoin('place_translations as tr', function($j) use ($locale){
+                $j->on('tr.place_id', '=', 'places.id')->where('tr.locale', $locale);
+            })
+            ->select('places.*')
+            ->orderBy('tr.name');
+            break;
+
+        case 'new':
+            // 新着（作成日の新しい順）
+            $q->orderByDesc('places.created_at')->orderByDesc('places.id');
+            break;
+
+        case 'recommended':
+        default:
+            // おすすめ順（rating降順、NULLは後ろ）
+            $q->orderByRaw('rating IS NULL')->orderByDesc('rating')->orderBy('places.id');
+            break;
+    }
+
     $p = $q->paginate(24)->withQueryString();
     // 念のため null モデルは捨てる（ほぼ出ませんが堅牢化）
     $p->setCollection($p->getCollection()->filter());

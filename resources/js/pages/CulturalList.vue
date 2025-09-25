@@ -7,7 +7,11 @@
     </div>
 
     <!-- フィルタバー -->
-    <FilterBar mode="cultural" />
+    <FilterBar 
+    mode="cultural"
+    :sort="route.query.sort || 'recommended'"
+    @change-sort="onSort"
+    />
 
     <div v-if="store.loading">Loading...</div>
     <div v-else-if="store.error" class="p-3 bg-red-50 text-red-700 rounded mb-4">
@@ -58,8 +62,14 @@ const q = ref(route.query.q || '')
 function reload() {
   const params = { ...route.query, q: q.value || undefined, page: undefined }
   router.replace({ query: params })
-  store.fetchList(route.params.locale, params)
+  // store.fetchList(route.params.locale, params)
 }
+
+function onSort (v) {
+  const params = { ...route.query, sort: v, page: undefined }
+  router.replace({ query: params })
+}
+
 watchEffect(() => {
   store.fetchList(route.params.locale, route.query)
 })

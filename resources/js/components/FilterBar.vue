@@ -1,7 +1,6 @@
 <template>
   <div class="mb-4 space-y-3">
-    <!-- カテゴリ（タブ/セグメント） -->
-  <div v-if="props.mode === 'castle'" class="flex flex-wrap gap-2">
+  <!-- <div v-if="props.mode === 'castle'" class="flex flex-wrap gap-2">
     <button
       @click="apply({ type:'castle', top100:1 })"
       :class="chipClass(isActive('top100'))"
@@ -24,7 +23,7 @@
     :class="chipClass(isActive('cultural'))"
     :aria-pressed="isActive('cultural')"
     >文化財</button>
-  </div>
+  </div> -->
 
     <!-- タグ（トグル式） -->
     <!-- <div class="flex items-center justify-between">
@@ -43,11 +42,10 @@
 
     <!-- 並び替え -->
     <div class="flex items-center gap-2">
-      <label class="text-sm text-gray-600">並び替え</label>
-      <select class="border rounded px-2 py-1" v-model="sort" @change="applyQuery()">
-        <option value="rating_desc">おすすめ順</option>
-        <option value="name_asc">名前順</option>
-        <option value="created_desc">新着</option>
+      <select v-model="localSort" class="border rounded px-3 py-2" @change="emitSort">
+        <option value="recommended">おすすめ順</option>
+        <option value="name">名前順</option>
+        <option value="new">新着</option>
       </select>
     </div>
   </div>
@@ -61,10 +59,10 @@ import { listTags } from '../lib/api'
 import { listCulturalTags } from '../lib/api'
 import { usePlacesStore } from '../stores/places'
 
-const props = defineProps({
-  mode: { type: String, default: 'castle' } // 'castle' | 'cultural'
-})
-
+const props = defineProps({ sort: { type: String, default: 'recommended' }})
+const emit = defineEmits(['change-sort'])
+const localSort = ref(props.sort)
+watch(() => props.sort, v => localSort.value = v || 'recommended')
 const route = useRoute()
 const router = useRouter()
 const store = usePlacesStore()
@@ -74,15 +72,16 @@ const tags = ref([])
 const selectedTags = ref([])
 const sort = ref(route.query.sort || 'rating_desc')
 
-// アクティブカテゴリ（クエリ -> UI）
 const active = computed(() => {
   const q = route.query
   if (q.type === 'cultural_property') return 'cp'
   if (q.others === '1' || q.others === 1) return 'others'
   if (q.top100c === '1' || q.top100c === 1) return 'top100c'
   if (q.top100 === '1' || q.top100 === 1) return 'top100'
-  return '' // 未選択状態
+  return ''
 })
+
+function emitSort(){ emit('change-sort', localSort.value) }
 
 function goto(params) {
   if (props.mode === 'cultural') {
@@ -126,7 +125,7 @@ function setCategory(key) {
   } else if (key === 'top100c') {
     base.type = 'castle'; base.top100c = 1
   } else if (key === 'others') {
-    base.others = 1 // コントローラ側で castle + 非top 条件を付与
+    base.others = 1
   } else if (key === 'cp') {
     base.type = 'cultural_property'
   }
@@ -135,7 +134,7 @@ function setCategory(key) {
 }
 
 function apply(next = {}) {
-  // 既存クエリから必要なものだけ引き継ぎつつ、置き換え
+
   const q0 = route.query
   const params = {
     q: next.q ?? q0.q ?? undefined,
@@ -145,10 +144,10 @@ function apply(next = {}) {
     top100: next.top100 ? 1 : undefined,
     top100c: next.top100c ? 1 : undefined,
     others: next.others ? 1 : undefined,
-    page: undefined, // 切替時はページをリセット
+    page: undefined,
   }
 
-  // ★ 文化財に切替える場合は castle系フラグを確実に落とす
+
   if (params.type === 'cultural') {
     params.top100 = undefined
     params.top100c = undefined
@@ -156,7 +155,7 @@ function apply(next = {}) {
   }
 
   router.replace({ query: params })
-  // 念のため即時フェッチ（watchEffect でも動くが、ここでも呼んでおく）
+
   store.fetchList(route.params.locale, params)
 }
 
@@ -169,7 +168,6 @@ function isActive(key) {
   return false
 }
 
-// ★ タグ風チップのクラス
 const baseChip =
   'inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border select-none ' +
   'transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black ' +
@@ -201,12 +199,10 @@ onMounted(async () => {
   const { data } = await listTags(route.params.locale)
   tags.value = data.data || []
 
-  // URLのtags -> UI
   const qs = route.query.tags
   selectedTags.value = qs ? String(qs).split(',').filter(Boolean) : []
 })
 
-// URLの変更に追随（戻る/進むでUI崩れないように）
 watch(() => route.query.tags, (v) => {
   selectedTags.value = v ? String(v).split(',').filter(Boolean) : []
 })
@@ -214,32 +210,23 @@ watch(() => route.query.sort, (v) => {
   if (v) sort.value = v
 })
 
-/* ==== cultural タグ ==== */
-// const allTags = ref([])           // [{name,slug,count}]
-// const selected = ref([])          // ['slug1','slug2']
-
-const allCulturalTags = ref([])    // [{name,slug,count}]
-const selectedCultural = ref([])   // ['slug1','slug2']
+const allCulturalTags = ref([])
+const selectedCultural = ref([])
 
 onMounted(async () => {
   if (props.mode !== 'cultural') return
   try {
     const { data } = await listCulturalTags(loc.value)
-    // allTags.value = data.data || []
     allCulturalTags.value = data.data || []
   } catch {}
 })
 
-// URL → 選択状態 同期
 watch(() => route.query.tags, (v) => {
-  // selected.value = (typeof v === 'string' && v.length)
   selectedCultural.value = (typeof v === 'string' && v.length)
     ? v.split(',').filter(Boolean)
     : []
 }, { immediate: true })
 
-// function toggleTag(slug) {
-//   const set = new Set(selected.value)
 function toggleTagCultural(slug) {
   const set = new Set(selectedCultural.value)
   set.has(slug) ? set.delete(slug) : set.add(slug)
