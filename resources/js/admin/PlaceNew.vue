@@ -20,11 +20,6 @@
           <input v-model="f.slug" class="border rounded px-3 py-2 w-full" placeholder="himeji,matsumoto" required />
         </label>
 
-        <!-- <label class="block">
-          <div class="text-sm text-gray-600">都道府県ID</div>
-          <input v-model.number="f.prefecture_id" type="number" class="border rounded px-3 py-2 w-full" required />
-        </label> -->
-
         <label class="block">
           <div class="text-sm text-gray-600">都道府県</div>
           <select
@@ -51,18 +46,18 @@
         <div class="grid grid-cols-2 gap-3">
           <label class="block">
             <div class="text-sm text-gray-600">緯度(lat)</div>
-            <input v-model="f.lat" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
+            <input v-model.number="f.lat" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
           </label>
           <label class="block">
             <div class="text-sm text-gray-600">経度(lng)</div>
-            <input v-model="f.lng" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
+            <input v-model.number="f.lng" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
           </label>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <label class="block">
             <div class="text-sm text-gray-600">成立年（built_year）</div>
-            <input v-model.number="f.built_year" type="text" class="border rounded px-3 py-2 w-full" />
+            <input v-model="f.built_year" type="text" class="border rounded px-3 py-2 w-full" />
           </label>
           <label class="block">
             <div class="text-sm text-gray-600">廃城年（abolished_year）</div>
@@ -116,6 +111,12 @@
             <input v-model.number="f.rating" type="number" min="0" max="5" class="border rounded px-3 py-2 w-full" />
           </label>
 
+          <label class="block">
+            <div class="text-sm text-gray-600">公式サイトURL（任意）</div>
+            <input v-model="f.official_url" class="border rounded px-3 py-2 w-full" placeholder="https://..." />
+          </label>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
           <label class="inline-flex items-center gap-2 mt-6">
             <input type="checkbox" v-model="f.is_top100" /> 100名城
           </label>
@@ -197,17 +198,45 @@
 
   <hr class="my-6"/>
 
-    <!-- 画像アップロード（任意） -->
-    <form @submit.prevent="upload" class="grid gap-2">
-      <div class="font-semibold">画像を追加（任意）</div>
-      <input type="file" @change="onFile" accept="image/*" />
-      <label class="inline-flex items-center gap-2 text-sm">
-        <input type="checkbox" v-model="is_cover" /> カバー画像にする
-      </label>
-      <input v-model="cap_ja" placeholder="キャプション（JA）" class="border rounded px-3 py-2" />
-      <input v-model="cap_en" placeholder="Caption (EN)" class="border rounded px-3 py-2" />
-      <button class="px-3 py-2 border rounded" :disabled="!createdId || !file || uploading">アップロード</button>
-    </form>
+  <form @submit.prevent="upload" class="grid gap-2">
+    <div class="font-semibold">画像を追加（任意）</div>
+
+    !-- カバー指定 & まとめキャプション -->
+    <label class="inline-flex items-center gap-2 text-sm">
+      <input type="checkbox" v-model="is_cover" />
+      1枚目をカバー画像にする
+    </label>
+    <input v-model="cap_ja" placeholder="キャプション（JA, 全画像に適用）" class="border rounded px-3 py-2" />
+    <input v-model="cap_en" placeholder="Caption (EN, apply to all)" class="border rounded px-3 py-2" />
+
+    <!-- 複数選択 -->
+    <input type="file" multiple @change="onFiles" accept="image/*" />
+
+    <!-- プレビュー -->
+    <div class="grid grid-cols-3 gap-2 my-2" v-if="previews.length">
+      <img v-for="(src,i) in previews" :key="i" :src="src" class="w-full h-24 object-cover rounded border" />
+    </div>
+
+    <!-- ボタン（状態表示つき） -->
+    <div class="flex items-center gap-3">
+      <button
+        type="submit"
+        class="px-3 py-2 border rounded"
+        :disabled="!canUpload"
+      >
+        アップロード
+      </button>
+      <span v-if="!createdId" class="text-sm text-gray-500">
+        まず「保存」を押して城を作成してください（画像はその後に登録できます）
+      </span>
+      <span v-else-if="!files.length" class="text-sm text-gray-500">
+        画像を選択してください
+      </span>
+      <span v-else-if="uploading" class="text-sm text-gray-500">
+        アップロード中…
+      </span>
+    </div>
+  </form>
 </template>
 
 <script setup>
@@ -216,6 +245,7 @@ import { api, listTags, listPrefectures } from '../lib/api'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
+import { onBeforeUnmount } from 'vue'
 
 const route = useRoute()
 const { locale } = useI18n()
@@ -244,6 +274,7 @@ const f = ref({
   rating: 0,
   is_top100: false,
   is_top100_continued: false,
+  official_url: '',
   meta: null,
 })
 
@@ -288,16 +319,15 @@ async function submit() {
   if (metaError.value) return
   loading.value = true; error.value = ''; done.value = false
   try {
-    const payload = {
-      ...f.value,
-      // boolean はAPI側でバリデーションしてもらう前提
-      t_ja: t_ja.value,
-      t_en: t_en.value,
-      tags: selectedTags.value,
+    if (!t_ja.value.slug_localized) t_ja.value.slug_localized = f.value.slug
+    if (!t_en.value.slug_localized && t_en.value.name) {
+      t_en.value.slug_localized = `${f.value.slug}-castle`
     }
+    const payload = { ...f.value, t_ja: t_ja.value, t_en: t_en.value, tags: selectedTags.value }
     const res = await api.post('/admin/places', payload)
     createdId.value = res?.data?.data?.id ?? res?.data?.id ?? null
     done.value = true
+    dirty.value = false
   } catch (e) {
     error.value = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message
   } finally {
@@ -305,15 +335,15 @@ async function submit() {
   }
 }
 
-// onMounted(async () => {
-//   const { data } = await listTags('ja')
-//   allTags.value = data?.data || data
-// })
+const dirty = ref(false)
+watch([f, t_ja, t_en, metaText, selectedTags], () => { dirty.value = true }, { deep:true })
+
+window.addEventListener('beforeunload', onBeforeUnload)
+function onBeforeUnload(e){ if(dirty.value){ e.preventDefault(); e.returnValue=''; } }
+onBeforeUnmount(()=> window.removeEventListener('beforeunload', onBeforeUnload))
 
 onMounted(async () => {
   const [{ data: tRes }, { data: pRes }] = await Promise.all([
-    // listTags('ja'),
-    // listPrefectures('ja'),
     listTags(loc.value),
     listPrefectures(loc.value),
   ])
@@ -327,25 +357,42 @@ function toggleTag(slug){
   selectedTags.value = [...s]
 }
 
-// 画像アップロード
-const file = ref(null)
-const cap_ja = ref(''); const cap_en = ref('')
-const is_cover = ref(false); const uploading = ref(false)
-function onFile(e){ file.value = e.target.files?.[0] || null }
+const cap_ja = ref('')
+const cap_en = ref('')
+const is_cover = ref(false)
+const uploading = ref(false)
+const files = ref([])
+const previews = ref([])
+function onFiles(e){
+  const list = Array.from(e.target.files || [])
+  files.value = list
+  previews.value = list.map(f => URL.createObjectURL(f))
+}
 
-async function upload() {
-  if (!createdId.value || !file.value) return
+const canUpload = computed(() =>
+  !!createdId.value && files.value.length > 0 && !uploading.value
+)
+
+
+async function upload(){
+  if (!canUpload.value) return
   uploading.value = true
   try {
-    const fd = new FormData()
-    fd.append('file', file.value)
-    fd.append('caption_ja', cap_ja.value || '')
-    fd.append('caption_en', cap_en.value || '')
-    fd.append('is_cover', is_cover.value ? '1' : '0')
-    await api.post(`/admin/places/${createdId.value}/photos`, fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    file.value = null; cap_ja.value = ''; cap_en.value = ''; is_cover.value = false
+    for (let i = 0; i < files.value.length; i++) {
+      const file = files.value[i]
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('caption_ja', cap_ja.value || '')
+      fd.append('caption_en', cap_en.value || '')
+      // 「1枚目をカバー」にチェックなら 1枚目のみカバー
+      fd.append('is_cover', is_cover.value && i === 0 ? '1' : '0')
+
+      await api.post(`/admin/places/${createdId.value}/photos`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+    }
+    files.value = []
+    previews.value = []
     alert('アップロードしました')
   } catch (e) {
     alert(e?.response?.data?.message || e.message)

@@ -14,7 +14,7 @@ class Place extends Model implements HasMedia
         'type','slug','prefecture_id','city','lat','lng',
         'built_year','abolished_year','castle_structure','tenshu_structure',
         'founder','main_renovators','main_lords','designated_heritage','remains',
-        'rating','is_top100','is_top100_continued','meta',
+        'official_url','rating','is_top100','is_top100_continued','meta',
     ];
 
     protected $casts = [

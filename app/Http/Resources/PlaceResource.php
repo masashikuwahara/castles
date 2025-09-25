@@ -83,6 +83,7 @@ class PlaceResource extends JsonResource
             'main_lords'        => $this->main_lords,
             'designated_heritage' => $this->designated_heritage,
             'remains'           => $this->remains,
+            'official_url' => $this->official_url,
             'rating'            => $this->rating,
             'is_top100'         => (bool) $this->is_top100,
             'is_top100_continued' => (bool) $this->is_top100_continued,

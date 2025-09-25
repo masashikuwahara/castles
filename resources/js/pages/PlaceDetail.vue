@@ -68,6 +68,14 @@
             <h4 class="font-semibold text-sm text-gray-600">おすすめ度</h4>
             <p class="text-gray-800">★{{ place.rating }}</p>
           </div>
+          <div v-if="place.official_url">
+            <h4 class="font-semibold text-sm text-gray-600">公式サイト</h4>
+            <p class="text-gray-800">
+              <a :href="ensureHttp(place.official_url)" target="_blank" rel="noopener noreferrer" class="underline">
+                {{ place.official_url }}
+              </a>
+            </p>
+          </div>
         </div>
 
         <div v-if="Object.keys(meta).length" class="mt-6">
@@ -184,6 +192,7 @@ const error = ref('')
 
 const place = computed(() => store.current)
 const meta = computed(() => store.current?.meta || {})
+const ensureHttp = (u) => !u ? '' : (/^https?:\/\//i.test(u) ? u : `https://${u}`)
 
 // カバー画像（言語別キャプション）
 const img = computed(() => {

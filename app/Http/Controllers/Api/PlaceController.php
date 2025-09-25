@@ -55,16 +55,17 @@ class PlaceController extends Controller
     public function show(string $locale, string $slug)
     {
         $place = Place::query()
-        ->with([
-            'translations' => fn($t) => $t->where('locale',$locale),
-            'prefecture','tags',
-            'media' => fn($m) => $m->where('collection_name','photos'),
+            ->with([
+                'translations' => fn($t) => $t->where('locale',$locale),
+                'prefecture',
+                'tags',
+                'media' => fn($m) => $m->where('collection_name','photos'),
             ])
-        ->where(function($q) use ($slug, $locale) {
-            $q->whereHas('translations', fn($t)=>$t->where('locale',$locale)->where('slug_localized',$slug))
-            ->orWhere('slug', $slug);
-        })
-        ->firstOrFail();
+            ->where(function($q) use ($slug, $locale) {
+                $q->whereHas('translations', fn($t)=>$t->where('locale',$locale)->where('slug_localized',$slug))
+                ->orWhere('slug', $slug);
+            })
+            ->firstOrFail();
 
         return new PlaceResource($place);
     }

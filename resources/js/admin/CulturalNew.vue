@@ -9,15 +9,13 @@
 
         <label class="block">
           <div class="text-sm text-gray-600">Slug（英小文字・-）</div>
-          <input v-model="f.slug" class="border rounded px-3 py-2 w-full" placeholder="sannai-maruyama" required />
+          <!-- <input v-model="f.slug" class="border rounded px-3 py-2 w-full" placeholder="sannai-maruyama" required /> -->
+          <input v-model="f.slug" class="border rounded px-3 py-2 w-full"
+          placeholder="sannai-maruyama" required
+          pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$" title="英小文字・数字・ハイフンのみ" />
         </label>
 
-        <!-- <label class="block">
-          <div class="text-sm text-gray-600">都道府県ID</div>
-          <input v-model.number="f.prefecture_id" type="number" class="border rounded px-3 py-2 w-full" required />
-        </label> -->
-
-                <label class="block">
+        <label class="block">
           <div class="text-sm text-gray-600">都道府県</div>
           <select
             v-model.number="f.prefecture_id"
@@ -43,11 +41,11 @@
         <div class="grid grid-cols-2 gap-3">
           <label class="block">
             <div class="text-sm text-gray-600">緯度(lat)</div>
-            <input v-model="f.lat" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
+            <input v-model.number="f.lat" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
           </label>
           <label class="block">
             <div class="text-sm text-gray-600">経度(lng)</div>
-            <input v-model="f.lng" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
+            <input v-model.number="f.lng" type="number" step="0.0000001" class="border rounded px-3 py-2 w-full" />
           </label>
         </div>
 
@@ -159,7 +157,7 @@
     <hr class="my-6"/>
 
     <!-- 画像アップロード（任意） -->
-    <form @submit.prevent="upload" class="grid gap-2">
+    <!-- <form @submit.prevent="upload" class="grid gap-2">
       <div class="font-semibold">画像を追加（任意）</div>
       <input type="file" @change="onFile" accept="image/*" />
       <label class="inline-flex items-center gap-2 text-sm">
@@ -168,16 +166,39 @@
       <input v-model="cap_ja" placeholder="キャプション（JA）" class="border rounded px-3 py-2" />
       <input v-model="cap_en" placeholder="Caption (EN)" class="border rounded px-3 py-2" />
       <button class="px-3 py-2 border rounded" :disabled="!createdId || !file || uploading">アップロード</button>
-    </form>
-  </div>
+    </form> -->
+  <!-- 画像アップロード（任意） -->
+  <form @submit.prevent="upload" class="grid gap-2">
+    <div class="font-semibold">画像を追加（任意）</div>
+    <label class="inline-flex items-center gap-2 text-sm">
+      <input type="checkbox" v-model="is_cover" />
+      1枚目をカバー画像にする
+    </label>
+    <input v-model="cap_ja" placeholder="キャプション（JA, 全画像に適用）" class="border rounded px-3 py-2" />
+    <input v-model="cap_en" placeholder="Caption (EN, apply to all)" class="border rounded px-3 py-2" />
+
+    <input type="file" multiple @change="onFiles" accept="image/*" />
+    <div class="grid grid-cols-3 gap-2 my-2" v-if="previews.length">
+      <img v-for="(src,i) in previews" :key="i" :src="src" class="w-full h-24 object-cover rounded border" />
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button type="submit" class="px-3 py-2 border rounded" :disabled="!canUpload">
+        アップロード
+      </button>
+      <span v-if="!createdId" class="text-sm text-gray-500">まず「保存」で文化財を作成してください</span>
+      <span v-else-if="!files.length" class="text-sm text-gray-500">画像を選択してください</span>
+      <span v-else-if="uploading" class="text-sm text-gray-500">アップロード中…</span>
+    </div>
+  </form>
+ </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { api, listTags, listPrefectures } from '../lib/api'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { computed } from 'vue'
 
 const route = useRoute()
 const { locale } = useI18n()
@@ -227,15 +248,8 @@ watch(metaText, (v) => {
   catch (e) { metaError.value = e.message }
 })
 
-// onMounted(async () => {
-//   const { data } = await listTags('ja')
-//   allTags.value = data?.data || data
-// })
-
 onMounted(async () => {
   const [{ data: tRes }, { data: pRes }] = await Promise.all([
-    // listTags('ja'),
-    // listPrefectures('ja'),
     listTags(loc.value),
     listPrefectures(loc.value),
   ])
@@ -253,6 +267,10 @@ async function submit() {
   if (metaError.value) return
   loading.value = true; error.value = ''; done.value = false
   try {
+    if (!t_ja.value.slug_localized) t_ja.value.slug_localized = f.value.slug
+    if (!t_en.value.slug_localized && t_en.value.name) {
+      t_en.value.slug_localized = `${f.value.slug}-site`
+    }
     const payload = {
       ...f.value,
       t_ja: t_ja.value,
@@ -270,29 +288,64 @@ async function submit() {
 }
 
 // 画像アップロード
-const file = ref(null)
-const cap_ja = ref(''); const cap_en = ref('')
-const is_cover = ref(false); const uploading = ref(false)
-function onFile(e){ file.value = e.target.files?.[0] || null }
+// const file = ref(null)
+// const cap_ja = ref(''); const cap_en = ref('')
+// const is_cover = ref(false); const uploading = ref(false)
+// function onFile(e){ file.value = e.target.files?.[0] || null }
 
-async function upload() {
-  if (!createdId.value || !file.value) return
-  uploading.value = true
-  try {
-    const fd = new FormData()
-    fd.append('file', file.value)
-    fd.append('caption_ja', cap_ja.value || '')
-    fd.append('caption_en', cap_en.value || '')
-    fd.append('is_cover', is_cover.value ? '1' : '0')
-    await api.post(`/admin/culturals/${createdId.value}/photos`, fd, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    file.value = null; cap_ja.value = ''; cap_en.value = ''; is_cover.value = false
-    alert('アップロードしました')
-  } catch (e) {
-    alert(e?.response?.data?.message || e.message)
-  } finally {
-    uploading.value = false
+// async function upload() {
+//   if (!createdId.value || !file.value) return
+//   uploading.value = true
+//   try {
+//     const fd = new FormData()
+//     fd.append('file', file.value)
+//     fd.append('caption_ja', cap_ja.value || '')
+//     fd.append('caption_en', cap_en.value || '')
+//     fd.append('is_cover', is_cover.value ? '1' : '0')
+//     await api.post(`/admin/culturals/${createdId.value}/photos`, fd, {
+//       headers: { 'Content-Type': 'multipart/form-data' }
+//     })
+//     file.value = null; cap_ja.value = ''; cap_en.value = ''; is_cover.value = false
+//     alert('アップロードしました')
+//   } catch (e) {
+//     alert(e?.response?.data?.message || e.message)
+//   } finally {
+//     uploading.value = false
+//   }
+// }
+
+  const files = ref([])
+  const previews = ref([])
+  const cap_ja = ref(''); const cap_en = ref('')
+  const is_cover = ref(false); const uploading = ref(false)
+  function onFiles(e){
+    const list = Array.from(e.target.files || [])
+    files.value = list
+    previews.value = list.map(f => URL.createObjectURL(f))
   }
-}
+  const canUpload = computed(() => !!createdId.value && files.value.length > 0 && !uploading.value)
+
+  async function upload() {
+    if (!canUpload.value) return
+    uploading.value = true
+    try {
+      for (let i = 0; i < files.value.length; i++) {
+        const file = files.value[i]
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('caption_ja', cap_ja.value || '')
+        fd.append('caption_en', cap_en.value || '')
+        fd.append('is_cover', is_cover.value && i === 0 ? '1' : '0') // 1枚目だけカバー
+        await api.post(`/admin/culturals/${createdId.value}/photos`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+      }
+      files.value = []; previews.value = []; // is_cover は好みでリセット
+      alert('アップロードしました')
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message)
+    } finally {
+      uploading.value = false
+    }
+  }
 </script>
