@@ -21,6 +21,7 @@ class CulturalSite extends Model implements HasMedia
     protected $casts = [
         'lat' => 'float', 'lng' => 'float',
         'meta' => 'array',
+        'rating' => 'float',
     ];
 
     public function translations(): HasMany
