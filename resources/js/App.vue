@@ -105,7 +105,14 @@
       <router-view />
     </main>
   </div>
+  
+  <div class="text-center mt-8">
+    <p class="text-sm">--更新履歴--</p>
+  </div>
   <div class=" dark:bg-gray-950">
+    <div v-for="history in histories" :key="history.date" class="text-black text-center">
+      {{ history.date }} {{ history.content }}
+    </div>
     <AppFooter />
   </div>
 </template>
@@ -122,6 +129,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRoute } from './composables/useLocaleRoute'
 import AppFooter from './components/AppFooter.vue'
+
+const histories = ref([
+  { date: '2025.05.02', content: 'リリースしました' }
+])
 
 const route = useRoute()
 const router = useRouter()
