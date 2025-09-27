@@ -9,7 +9,7 @@
             class="no-underline text-inherit hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 rounded"
             title="最初に戻る"
           >
-            Castles & Cultural Properties
+            Daytripper
           </router-link>
         </h1>
 
@@ -92,11 +92,23 @@
 
     <!-- コンテンツ -->
     <main class="max-w-7xl mx-auto px-4 py-6">
+      <section class="mb-8 rounded-xl border bg-white/70 dark:bg-gray-900/60 p-5">
+        <h1 class="text-2xl font-bold">
+          {{ isJa ? '城と文化財の魅力を、写真とデータで。' : 'Discover castles & cultural heritage with photos and data.' }}
+        </h1>
+        <p class="mt-2 text-gray-700 dark:text-gray-300">
+          {{ isJa
+            ? 'これまで訪れた日本各地の城・文化財を、写真・基本データ・解説でわかりやすく紹介。タグや検索で素早く見つけ、地図で位置を確認。クイズで楽しく学べます。'
+            : 'Explore the places I have visited around Japan with photos, important information, and easy-to-understand overviews. Use tags and search to quickly find places, view them on a map, and learn from quizzes.' }}
+        </p>
+      </section>
       <router-view />
     </main>
   </div>
+  <div class=" dark:bg-gray-950">
+    <AppFooter />
+  </div>
 </template>
-
 <style>
 .fade-slide-enter-active,
 .fade-slide-leave-active { transition: all .18s ease; }
@@ -109,12 +121,15 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRoute } from './composables/useLocaleRoute'
+import AppFooter from './components/AppFooter.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { locale } = useI18n()
 const { rl } = useLocaleRoute()
 const open = ref(false)
+
+const isJa = computed(() => (route.params.locale ?? 'ja') === 'ja')
 
 const currentKey = computed(() => {
   switch (route.name) {
