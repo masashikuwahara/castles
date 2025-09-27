@@ -3,7 +3,7 @@
     <div class="bg-white/50 dark:bg-gray-900/50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-xs sm:text-sm flex flex-col sm:flex-row items-center justify-between text-gray-500 dark:text-gray-400">
         <div>© {{ year }} {{ siteName }}</div>v.{{ hist }}
-        <button @click="scrollTop" class="mt-2 sm:mt-0 underline">{{ t('footer.back_to_top') }}</button>
+        <button @click="scrollTop" class="mt-2 sm:mt-0 underline">{{ t('トップに戻る') }}</button>
       </div>
     </div>
   </footer>

@@ -131,7 +131,7 @@ import { useLocaleRoute } from './composables/useLocaleRoute'
 import AppFooter from './components/AppFooter.vue'
 
 const histories = ref([
-  { date: '2025.05.02', content: 'リリースしました' }
+  { date: '2025.10.15', content: 'リニューアルしました' }
 ])
 
 const route = useRoute()
