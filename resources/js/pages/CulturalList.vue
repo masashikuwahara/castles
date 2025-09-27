@@ -21,12 +21,6 @@
       <PlaceCard v-for="p in store.items" :key="p.id" :place="p" />
     </div>
 
-    <!-- <div class="mt-6 flex gap-2" v-if="safeLinks.length">
-      <button v-for="(l, idx) in safeLinks" :key="idx" :disabled="!l.url"
-              @click="goto(l.url)" class="px-3 py-1 border rounded disabled:opacity-50"
-              v-html="l.label" />
-    </div> -->
-
     <!-- ページャ -->
      <Pagination
      v-if="store.pagination && store.pagination.last_page > 1"
@@ -53,11 +47,6 @@ const router = useRouter()
 const store = useCulturalsStore()
 
 const q = ref(route.query.q || '')
-// const safeLinks = computed(() =>
-// Array.isArray(store.pagination?.links)
-// ? store.pagination.links.map(l => ({ ...l, url: l.url || null }))
-// : []
-// )
 
 function reload() {
   const params = { ...route.query, q: q.value || undefined, page: undefined }

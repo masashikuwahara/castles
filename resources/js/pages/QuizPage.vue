@@ -2,7 +2,6 @@
   <div>
     <div class="mb-4 flex items-center justify-between">
       <h2 class="text-xl font-bold">クイズ</h2>
-      <div class="text-sm text-gray-600">問題はランダム出題</div>
     </div>
 
     <!-- 進捗/スコア -->

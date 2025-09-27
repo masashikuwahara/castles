@@ -11,7 +11,6 @@ export const useCulturalsStore = defineStore('culturals', {
       try {
         const { data } = await listCulturalSites(locale, params)
         this.items = data.data
-        // this.pagination = { ...data.meta, links: data.links }
         this.pagination = { ...data.meta, links: data.meta?.links || [] }
       } catch (e) {
         this.error = e?.response?.data || e.message || 'Request failed'
